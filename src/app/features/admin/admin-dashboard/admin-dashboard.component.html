@@ -1,0 +1,153 @@
+<div class="p-8 max-w-7xl mx-auto">
+  <!-- Header Section -->
+  <div class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4 animate-fade-in-down">
+    <div>
+      <h1 class="text-4xl font-bold text-gray-900 tracking-tight">Dashboard</h1>
+      <p class="text-gray-500 mt-2 text-lg">
+        Bienvenido de nuevo. Hoy es <span class="font-medium text-gray-700">{{ currentDate() | date:'fullDate' }}</span>
+      </p>
+    </div>
+    <!-- Optional: Add a date picker or filter here later -->
+  </div>
+
+  @if (loading()) {
+    <div class="flex flex-col items-center justify-center py-20 animate-pulse">
+      <div class="w-16 h-16 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mb-4"></div>
+      <p class="text-gray-500 font-medium">Cargando estadísticas...</p>
+    </div>
+  } @else {
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10 animate-fade-in-up">
+      
+      <!-- Total Products -->
+      <div class="relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl p-6 text-white shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 group cursor-default">
+        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
+        <div class="relative z-10 flex items-center justify-between">
+          <div>
+            <p class="text-blue-100 text-sm font-medium uppercase tracking-wider">Productos</p>
+            <p class="text-4xl font-bold mt-2">{{ stats().totalProducts }}</p>
+            <p class="text-blue-100 text-xs mt-1">En catálogo</p>
+          </div>
+          <div class="bg-white/20 p-3.5 rounded-2xl backdrop-blur-sm group-hover:rotate-12 transition-transform duration-300">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Sales -->
+      <div class="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-6 text-white shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 group cursor-default">
+        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
+        <div class="relative z-10 flex items-center justify-between">
+          <div>
+            <p class="text-emerald-100 text-sm font-medium uppercase tracking-wider">Ventas Totales</p>
+            <p class="text-4xl font-bold mt-2">{{ stats().totalSales }}</p>
+            <p class="text-emerald-100 text-xs mt-1">Registradas</p>
+          </div>
+          <div class="bg-white/20 p-3.5 rounded-2xl backdrop-blur-sm group-hover:rotate-12 transition-transform duration-300">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Users -->
+      <div class="relative overflow-hidden bg-gradient-to-br from-violet-500 to-violet-600 rounded-3xl p-6 text-white shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 group cursor-default">
+        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
+        <div class="relative z-10 flex items-center justify-between">
+          <div>
+            <p class="text-violet-100 text-sm font-medium uppercase tracking-wider">Usuarios</p>
+            <p class="text-4xl font-bold mt-2">{{ stats().totalUsers }}</p>
+            <p class="text-violet-100 text-xs mt-1">Activos</p>
+          </div>
+          <div class="bg-white/20 p-3.5 rounded-2xl backdrop-blur-sm group-hover:rotate-12 transition-transform duration-300">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today Revenue -->
+      <div class="relative overflow-hidden bg-gradient-to-br from-amber-500 to-amber-600 rounded-3xl p-6 text-white shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 group cursor-default">
+        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
+        <div class="relative z-10 flex items-center justify-between">
+          <div>
+            <p class="text-amber-100 text-sm font-medium uppercase tracking-wider">Ingresos Hoy</p>
+            <p class="text-4xl font-bold mt-2">Bs. {{ stats().todayRevenue.toFixed(2) }}</p>
+            <p class="text-amber-100 text-xs mt-1">Ventas del día</p>
+          </div>
+          <div class="bg-white/20 p-3.5 rounded-2xl backdrop-blur-sm group-hover:rotate-12 transition-transform duration-300">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white rounded-3xl shadow-xl p-8 border border-gray-100 animate-fade-in-up delay-100">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Acciones Rápidas</h2>
+        <span class="text-sm text-gray-500">Accesos directos frecuentes</span>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <!-- Add Stock -->
+        <a href="/admin/inventory" class="group flex items-center gap-4 p-5 bg-gray-50 rounded-2xl hover:bg-primary-50 hover:shadow-md transition-all duration-300 border border-transparent hover:border-primary-100">
+          <div class="bg-white p-3 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-300 text-primary-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="font-bold text-gray-900 group-hover:text-primary-700 transition-colors">Agregar Stock</p>
+            <p class="text-xs text-gray-500 mt-0.5">Gestión de almacenes</p>
+          </div>
+        </a>
+
+        <!-- New User -->
+        <a href="/admin/users" class="group flex items-center gap-4 p-5 bg-gray-50 rounded-2xl hover:bg-violet-50 hover:shadow-md transition-all duration-300 border border-transparent hover:border-violet-100">
+          <div class="bg-white p-3 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-300 text-violet-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="font-bold text-gray-900 group-hover:text-violet-700 transition-colors">Nuevo Usuario</p>
+            <p class="text-xs text-gray-500 mt-0.5">Crear cuenta de acceso</p>
+          </div>
+        </a>
+
+        <!-- Sales Register -->
+        <a href="/admin/sales" class="group flex items-center gap-4 p-5 bg-gray-50 rounded-2xl hover:bg-emerald-50 hover:shadow-md transition-all duration-300 border border-transparent hover:border-emerald-100">
+          <div class="bg-white p-3 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-300 text-emerald-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">Registro Ventas</p>
+            <p class="text-xs text-gray-500 mt-0.5">Ver historial completo</p>
+          </div>
+        </a>
+
+        <!-- Analytics -->
+        <a href="/admin/analytics" class="group flex items-center gap-4 p-5 bg-gray-50 rounded-2xl hover:bg-amber-50 hover:shadow-md transition-all duration-300 border border-transparent hover:border-amber-100">
+          <div class="bg-white p-3 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-300 text-amber-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="font-bold text-gray-900 group-hover:text-amber-700 transition-colors">Análisis Datos</p>
+            <p class="text-xs text-gray-500 mt-0.5">Métricas y reportes</p>
+          </div>
+        </a>
+      </div>
+    </div>
+  }
+</div>
