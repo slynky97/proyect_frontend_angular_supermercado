@@ -1,0 +1,219 @@
+<div class="p-8">
+  <div class="sticky top-0 z-50 bg-gray-50/95 backdrop-blur-sm py-4 border-b border-gray-300 mb-6 -mx-8 px-8">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">Inventario</h1>
+      <p class="text-gray-600 mt-1 text-sm">Consulta de stock y almacenes (Solo lectura)</p>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">Filtros y Búsqueda</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Search Input -->
+      <div class="lg:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Buscar Producto</label>
+        <input 
+          type="text" 
+          [ngModel]="searchTerm()"
+          (ngModelChange)="searchTerm.set($event)"
+          placeholder="Buscar por nombre, descripción o marca..."
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+        />
+      </div>
+
+      <!-- Category Filter -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+        <select 
+          [ngModel]="selectedCategory()"
+          (ngModelChange)="selectedCategory.set($event)"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+        >
+          <option value="">Todas</option>
+          <option *ngFor="let cat of categories()" [value]="cat.nombre">{{ cat.nombre }}</option>
+        </select>
+      </div>
+
+      <!-- Stock Level Filter -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nivel de Stock</label>
+        <select 
+          [ngModel]="selectedStockLevel()"
+          (ngModelChange)="selectedStockLevel.set($event)"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+        >
+          <option value="">Todos</option>
+          <option value="out">Sin Stock</option>
+          <option value="low">Bajo (<= 10)</option>
+          <option value="medium">Medio (11-50)</option>
+          <option value="good">Bueno (> 50)</option>
+        </select>
+      </div>
+
+      <!-- Clear Filters Button -->
+      <div class="flex items-end lg:col-span-2">
+        <button 
+          (click)="clearFilters()"
+          class="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+        >
+          Limpiar Filtros
+        </button>
+      </div>
+    </div>
+
+    <!-- Results Count -->
+    <div class="mt-4 flex items-center justify-between">
+      <div class="text-sm text-gray-600">
+        Mostrando <span class="font-semibold">{{ filteredStockRows().length }}</span> de <span class="font-semibold">{{ allStockRows().length }}</span> productos
+      </div>
+      <div class="flex items-center gap-2">
+        <label class="text-sm text-gray-700">Productos por página:</label>
+        <select 
+          [ngModel]="pageSize()"
+          (ngModelChange)="changePageSize($event)"
+          class="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+        >
+          <option [value]="10">10</option>
+          <option [value]="20">20</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="flex items-center justify-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+    </div>
+  } @else {
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-green-600 border-b-2 border-green-700">
+            <tr>
+              <th class="px-6 py-4 text-left text-sm font-semibold text-white sticky left-0 bg-green-600 z-30">Producto</th>
+              <th class="px-6 py-4 text-left text-sm font-semibold text-white">Imagen</th>
+              <th class="px-6 py-4 text-left text-sm font-semibold text-white">Categoría</th>
+              <th class="px-6 py-4 text-left text-sm font-semibold text-white">Unidad</th>
+              @for (warehouse of warehouses(); track warehouse.id) {
+                <th class="px-6 py-4 text-center text-sm font-semibold text-white bg-green-600">
+                  {{ warehouse.nombre }}
+                  <div class="text-xs font-normal text-gray-200">{{ warehouse.sucursal?.nombre || '' }}</div>
+                </th>
+              }
+              <th class="px-6 py-4 text-center text-sm font-semibold text-white bg-green-600">Total</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            @if (paginatedStockRows().length === 0) {
+              <tr>
+                <td [attr.colspan]="warehouses().length + 5" class="px-6 py-12 text-center text-gray-500">
+                  <div class="flex flex-col items-center">
+                    <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                    </svg>
+                    <p class="text-lg font-medium">No se encontraron productos</p>
+                    <p class="text-sm">Intenta ajustar los filtros de búsqueda</p>
+                  </div>
+                </td>
+              </tr>
+            } @else {
+              @for (row of paginatedStockRows(); track row.productId) {
+                <tr class="hover:bg-gray-50 transition-colors">
+                  <td class="px-6 py-4 sticky left-0 bg-white z-20 shadow-sm">
+                    <div class="font-medium text-gray-900">{{ row.productName }}</div>
+                    <div class="text-sm text-gray-600">{{ row.productDescription }}</div>
+                    @if (row.productBrand) {
+                      <div class="text-xs text-gray-500 mt-1">Marca: {{ row.productBrand }}</div>
+                    }
+                  </td>
+                  <td class="px-6 py-4">
+                    @if (row.productImage) {
+                      <img [src]="row.productImage" 
+                           [alt]="row.productName" 
+                           class="w-12 h-12 object-cover rounded-lg border border-gray-200 cursor-pointer hover:ring-2 hover:ring-green-500 transition-all"
+                           (click)="openImagePreview(row.productImage, row.productName, row.productDescription)"
+                           (error)="$event.target.src='https://via.placeholder.com/48?text=Sin+Imagen'" />
+                    } @else {
+                      <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                        <span class="text-gray-400 text-xs">Sin img</span>
+                      </div>
+                    }
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-900">{{ row.category || '-' }}</td>
+                  <td class="px-6 py-4 text-sm text-gray-700">{{ row.unitOfMeasure }}</td>
+                  @for (warehouse of warehouses(); track warehouse.id) {
+                    <td class="px-6 py-4 text-center">
+                      @if (row.stockByWarehouse.get(warehouse.id); as stockInfo) {
+                        <span [class]="getStockClass(stockInfo.cantidad)">
+                          {{ stockInfo.cantidad }}
+                        </span>
+                      } @else {
+                        <span class="text-gray-400 text-sm">0</span>
+                      }
+                    </td>
+                  }
+                  <td class="px-6 py-4 text-center">
+                    <span class="font-semibold text-gray-900">{{ row.totalStock }}</span>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div class="bg-gray-50 px-6 py-4 border-t border-gray-300 flex items-center justify-between">
+        <div class="text-sm text-gray-700">
+          Página <span class="font-semibold">{{ currentPage() }}</span> de <span class="font-semibold">{{ totalPages() }}</span>
+          <span class="text-gray-500 ml-2">
+            ({{ (currentPage() - 1) * pageSize() + 1 }} - {{ Math.min(currentPage() * pageSize(), filteredStockRows().length) }} de {{ filteredStockRows().length }})
+          </span>
+        </div>
+        <div class="flex gap-2">
+          <button 
+            (click)="goToFirstPage()"
+            [disabled]="currentPage() === 1"
+            class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            « Primera
+          </button>
+          <button 
+            (click)="previousPage()"
+            [disabled]="currentPage() === 1"
+            class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            ‹ Anterior
+          </button>
+          <button 
+            (click)="nextPage()"
+            [disabled]="currentPage() === totalPages()"
+            class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Siguiente ›
+          </button>
+          <button 
+            (click)="goToLastPage()"
+            [disabled]="currentPage() === totalPages()"
+            class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Última »
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Image Preview Modal -->
+  @if (showImagePreview()) {
+    <app-image-preview-modal
+      [imageUrl]="previewImageUrl()"
+      [imageAlt]="previewImageAlt()"
+      [imageDescription]="previewImageDescription()"
+      (closed)="closeImagePreview()"
+    />
+  }
+</div>

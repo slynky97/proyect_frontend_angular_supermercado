@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AlmacenService } from '../../../core/services/almacen.service';
@@ -7,10 +7,10 @@ import { Almacen, AlmacenProducto } from '../../../core/models/inventory.model';
 import { Product } from '../../../core/models/product.model';
 
 @Component({
-    selector: 'app-stock-form',
-    standalone: true,
-    imports: [CommonModule, ReactiveFormsModule],
-    template: `
+  selector: 'app-stock-form',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
+  template: `
     <div class="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
       <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
         <h2 class="text-2xl font-bold mb-4">{{ stockEntry ? 'Editar' : 'Asignar' }} Stock</h2>
@@ -90,72 +90,72 @@ import { Product } from '../../../core/models/product.model';
   `
 })
 export class StockFormComponent implements OnChanges {
-    @Input() stockEntry: AlmacenProducto | null = null;
-    @Input() warehouses: Almacen[] = [];
-    @Input() products: Product[] = [];
-    @Output() saved = new EventEmitter<void>();
-    @Output() cancelled = new EventEmitter<void>();
+  @Input() stockEntry: AlmacenProducto | null = null;
+  @Input() warehouses: Almacen[] = [];
+  @Input() products: Product[] = [];
+  @Output() saved = new EventEmitter<void>();
+  @Output() cancelled = new EventEmitter<void>();
 
-    private fb = inject(FormBuilder);
-    private almacenService = inject(AlmacenService);
+  private fb = inject(FormBuilder);
+  private almacenService = inject(AlmacenService);
 
-    form: FormGroup;
+  form: FormGroup;
 
-    constructor() {
-        this.form = this.fb.group({
-            productoId: ['', Validators.required],
-            almacenId: ['', Validators.required],
-            cantidad_actual: [0, [Validators.required, Validators.min(0)]]
-        });
+  constructor() {
+    this.form = this.fb.group({
+      productoId: ['', Validators.required],
+      almacenId: ['', Validators.required],
+      cantidad_actual: [0, [Validators.required, Validators.min(0)]]
+    });
+  }
+
+  ngOnChanges(): void {
+    if (this.stockEntry) {
+      this.form.patchValue({
+        productoId: this.stockEntry.producto.id,
+        almacenId: this.stockEntry.almacen.id,
+        cantidad_actual: this.stockEntry.cantidad_actual
+      });
     }
+  }
 
-    ngOnChanges(): void {
-        if (this.stockEntry) {
-            this.form.patchValue({
-                productoId: this.stockEntry.producto.id,
-                almacenId: this.stockEntry.almacen.id,
-                cantidad_actual: this.stockEntry.cantidad_actual
-            });
+  onSubmit(): void {
+    if (this.form.invalid) return;
+
+    const formValue = this.form.value;
+
+    if (this.stockEntry) {
+      // Update existing stock
+      this.almacenService.updateStock(this.stockEntry.id, {
+        cantidad_actual: formValue.cantidad_actual
+      }).subscribe({
+        next: () => {
+          this.saved.emit();
+        },
+        error: (err) => {
+          console.error('Error updating stock:', err);
+          alert('Error al actualizar el stock');
         }
-    }
-
-    onSubmit(): void {
-        if (this.form.invalid) return;
-
-        const formValue = this.form.value;
-
-        if (this.stockEntry) {
-            // Update existing stock
-            this.almacenService.updateStock(this.stockEntry.id, {
-                cantidad_actual: formValue.cantidad_actual
-            }).subscribe({
-                next: () => {
-                    this.saved.emit();
-                },
-                error: (err) => {
-                    console.error('Error updating stock:', err);
-                    alert('Error al actualizar el stock');
-                }
-            });
-        } else {
-            // Create new stock assignment
-            this.almacenService.createStock({
-                productoId: +formValue.productoId,
-                almacenId: +formValue.almacenId,
-                cantidad_actual: formValue.cantidad_actual
-            }).subscribe({
-                next: () => {
-                    this.saved.emit();
-                },
-                error: (err) => {
-                    console.error('Error creating stock:', err);
-                    alert('Error al asignar el stock');
-                }
-            });
+      });
+    } else {
+      // Create new stock assignment
+      this.almacenService.createStock({
+        productoId: +formValue.productoId,
+        almacenId: +formValue.almacenId,
+        cantidad_actual: formValue.cantidad_actual
+      }).subscribe({
+        next: () => {
+          this.saved.emit();
+        },
+        error: (err) => {
+          console.error('Error creating stock:', err);
+          alert('Error al asignar el stock');
         }
+      });
     }
+  }
 
-    onCancel(): void {
-        this.cancelled.emit();
-    }
+  onCancel(): void {
+    this.cancelled.emit();
+  }
 }

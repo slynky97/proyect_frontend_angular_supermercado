@@ -1,4 +1,5 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AlmacenService } from '../../../core/services/almacen.service';
@@ -9,6 +10,7 @@ import { Almacen, AlmacenProducto, Sucursal } from '../../../core/models/invento
 import { Categoria, Product } from '../../../core/models/product.model';
 import { StockFormComponent } from './stock-form.component';
 import { ProductStockFormComponent } from './product-stock-form.component';
+import { ImagePreviewModalComponent } from '../../../shared/components/image-preview-modal.component';
 
 interface StockRow {
   productId: number;
@@ -26,10 +28,10 @@ interface StockRow {
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [CommonModule, FormsModule, StockFormComponent, ProductStockFormComponent],
+  imports: [CommonModule, FormsModule, StockFormComponent, ProductStockFormComponent, ImagePreviewModalComponent],
   template: `
     <div class="p-8">
-      <div class="sticky top-0 z-10 bg-gray-50/95 backdrop-blur-sm py-4 border-b border-gray-300 mb-6 -mx-8 px-8 flex items-center justify-between">
+      <div class="sticky top-0 z-50 bg-gray-50/95 backdrop-blur-sm py-4 border-b border-gray-300 mb-6 -mx-8 px-8 flex items-center justify-between">
         <div>
           <h1 class="text-3xl font-bold text-gray-900">Inventario</h1>
           <p class="text-gray-600 mt-1 text-sm">Gestión de stock y almacenes</p>
@@ -84,8 +86,8 @@ interface StockRow {
             >
               <option value="">Todos</option>
               <option value="out">Sin Stock</option>
-              <option value="low">Bajo (< 10)</option>
-              <option value="medium">Medio (10-50)</option>
+              <option value="low">Bajo (<= 10)</option>
+              <option value="medium">Medio (11-50)</option>
               <option value="good">Bueno (> 50)</option>
             </select>
           </div>
@@ -132,7 +134,7 @@ interface StockRow {
             <table class="w-full">
               <thead class="bg-primary-600 border-b-2 border-primary-700">
                 <tr>
-                  <th class="px-6 py-4 text-left text-sm font-semibold text-white sticky left-0 bg-primary-600 z-10">Producto</th>
+                  <th class="px-6 py-4 text-left text-sm font-semibold text-white sticky left-0 bg-primary-600 z-30">Producto</th>
                   <th class="px-6 py-4 text-left text-sm font-semibold text-white">Imagen</th>
                   <th class="px-6 py-4 text-left text-sm font-semibold text-white">Categoría</th>
                   <th class="px-6 py-4 text-left text-sm font-semibold text-white">Unidad</th>
@@ -161,8 +163,19 @@ interface StockRow {
                 } @else {
                   @for (row of paginatedStockRows(); track row.productId) {
                     <tr class="hover:bg-gray-50 transition-colors">
-                      <td class="px-6 py-4 sticky left-0 bg-white">
-                        <div class="font-medium text-gray-900">{{ row.productName }}</div>
+                      <td class="px-6 py-4 sticky left-0 bg-white z-20 shadow-sm">
+                        <div class="flex items-center gap-2">
+                          <div class="font-medium text-gray-900">{{ row.productName }}</div>
+                          <button 
+                            (click)="editProduct(row.productId)"
+                            class="text-gray-400 hover:text-primary-600 transition-colors"
+                            title="Editar producto"
+                          >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                            </svg>
+                          </button>
+                        </div>
                         <div class="text-sm text-gray-600">{{ row.productDescription }}</div>
                         @if (row.productBrand) {
                           <div class="text-xs text-gray-500 mt-1">Marca: {{ row.productBrand }}</div>
@@ -172,7 +185,8 @@ interface StockRow {
                         @if (row.productImage) {
                           <img [src]="row.productImage" 
                                [alt]="row.productName" 
-                               class="w-12 h-12 object-cover rounded-lg border border-gray-200"
+                               class="w-12 h-12 object-cover rounded-lg border border-gray-200 cursor-pointer hover:ring-2 hover:ring-primary-500 transition-all"
+                               (click)="openImagePreview(row.productImage, row.productName, row.productDescription)"
                                (error)="$event.target.src='https://via.placeholder.com/48?text=Sin+Imagen'" />
                         } @else {
                           <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
@@ -270,6 +284,7 @@ interface StockRow {
       <!-- Product-Stock Form Modal -->
       @if (showProductForm()) {
         <app-product-stock-form
+          [product]="editingProduct()"
           [warehouses]="warehouses()"
           [categories]="categories()"
           (saved)="handleProductSaved()"
@@ -287,6 +302,16 @@ interface StockRow {
           (cancelled)="closeStockForm()"
         />
       }
+
+      <!-- Image Preview Modal -->
+      @if (showImagePreview()) {
+        <app-image-preview-modal
+          [imageUrl]="previewImageUrl()"
+          [imageAlt]="previewImageAlt()"
+          [imageDescription]="previewImageDescription()"
+          (closed)="closeImagePreview()"
+        />
+      }
     </div>
   `
 })
@@ -295,6 +320,7 @@ export class InventoryComponent implements OnInit {
   private sucursalService = inject(SucursalService);
   private categoryService = inject(CategoryService);
   private productService = inject(ProductService);
+  private route = inject(ActivatedRoute);
 
   // Expose Math for template
   Math = Math;
@@ -311,6 +337,13 @@ export class InventoryComponent implements OnInit {
   showForm = signal(false);
   showProductForm = signal(false);
   editingStock = signal<AlmacenProducto | null>(null);
+  editingProduct = signal<Product | null>(null);
+
+  // Image preview state
+  showImagePreview = signal(false);
+  previewImageUrl = signal('');
+  previewImageAlt = signal('');
+  previewImageDescription = signal('');
 
   // Filter signals
   searchTerm = signal('');
@@ -352,7 +385,7 @@ export class InventoryComponent implements OnInit {
     // Calculate stock level for each product
     productMap.forEach(row => {
       if (row.totalStock === 0) row.stockLevel = 'out';
-      else if (row.totalStock < 10) row.stockLevel = 'low';
+      else if (row.totalStock <= 10) row.stockLevel = 'low';
       else if (row.totalStock <= 50) row.stockLevel = 'medium';
       else row.stockLevel = 'good';
     });
@@ -408,6 +441,13 @@ export class InventoryComponent implements OnInit {
 
   ngOnInit() {
     this.loadData();
+
+    // Check for query params
+    this.route.queryParams.subscribe(params => {
+      if (params['stockLevel']) {
+        this.selectedStockLevel.set(params['stockLevel']);
+      }
+    });
   }
 
   private loadData() {
@@ -532,15 +572,40 @@ export class InventoryComponent implements OnInit {
 
   // Product form methods
   openProductForm(): void {
+    this.editingProduct.set(null);
     this.showProductForm.set(true);
+  }
+
+  editProduct(productId: number): void {
+    const product = this.products().find(p => p.id === productId);
+    if (product) {
+      this.editingProduct.set(product);
+      this.showProductForm.set(true);
+    }
   }
 
   closeProductForm(): void {
     this.showProductForm.set(false);
+    this.editingProduct.set(null);
   }
 
   handleProductSaved(): void {
     this.loadData();
     this.closeProductForm();
+  }
+
+  // Image preview methods
+  openImagePreview(imageUrl: string, alt: string, description?: string): void {
+    this.previewImageUrl.set(imageUrl);
+    this.previewImageAlt.set(alt);
+    this.previewImageDescription.set(description || '');
+    this.showImagePreview.set(true);
+  }
+
+  closeImagePreview(): void {
+    this.showImagePreview.set(false);
+    this.previewImageUrl.set('');
+    this.previewImageAlt.set('');
+    this.previewImageDescription.set('');
   }
 }

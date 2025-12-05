@@ -1,0 +1,174 @@
+<div class="p-8">
+  <div class="sticky top-0 z-10 bg-gray-50/95 backdrop-blur-sm py-4 border-b border-gray-300 mb-6 -mx-8 px-8 flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">Ventas</h1>
+      <p class="text-gray-600 mt-1 text-sm">Catálogo de productos y carrito de compras</p>
+    </div>
+    <button 
+      (click)="toggleCart()"
+      class="px-6 py-3 bg-gradient-to-r from-green-500 to-green-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center gap-2"
+    >
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+      </svg>
+      🛒 Carrito ({{ cartService.itemCount() }})
+    </button>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">Filtros y Búsqueda</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="lg:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+        <input 
+          type="text" 
+          [ngModel]="searchTerm()"
+          (ngModelChange)="searchTerm.set($event)"
+          placeholder="Buscar por nombre, descripción o marca..."
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+        <select 
+          [ngModel]="selectedCategory()"
+          (ngModelChange)="selectedCategory.set($event)"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+        >
+          <option value="">Todas</option>
+          <option *ngFor="let cat of categories()" [value]="cat.id">{{ cat.nombre }}</option>
+        </select>
+      </div>
+
+      <div class="flex items-end">
+        <button 
+          (click)="clearFilters()"
+          class="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+        >
+          Limpiar Filtros
+        </button>
+      </div>
+    </div>
+
+    <div class="mt-4 flex items-center justify-between">
+      <div class="text-sm text-gray-600">
+        Mostrando <span class="font-semibold">{{ filteredProducts().length }}</span> de <span class="font-semibold">{{ allProducts().length }}</span> productos
+      </div>
+      <div class="flex items-center gap-2">
+        <label class="text-sm text-gray-700">Productos por página:</label>
+        <select 
+          [ngModel]="pageSize()"
+          (ngModelChange)="changePageSize($event)"
+          class="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+        >
+          <option [value]="10">10</option>
+          <option [value]="20">20</option>
+          <option [value]="50">50</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="flex items-center justify-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+    </div>
+  } @else {
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+      <table class="w-full">
+        <thead class="bg-green-600 border-b-2 border-green-700">
+          <tr>
+            <th class="px-6 py-4 text-left text-sm font-semibold text-white">Nombre</th>
+            <th class="px-6 py-4 text-left text-sm font-semibold text-white">Imagen</th>
+            <th class="px-6 py-4 text-left text-sm font-semibold text-white">Categoría</th>
+            <th class="px-6 py-4 text-left text-sm font-semibold text-white">Precio</th>
+            <th class="px-6 py-4 text-left text-sm font-semibold text-white">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          @if (paginatedProducts().length === 0) {
+            <tr>
+              <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                <p class="text-lg font-medium">No se encontraron productos</p>
+              </td>
+            </tr>
+          } @else {
+            @for (product of paginatedProducts(); track product.id) {
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4">
+                  <div class="font-medium text-gray-900">{{ product.nombre }}</div>
+                  <div class="text-sm text-gray-600">{{ product.descripcion }}</div>
+                </td>
+                <td class="px-6 py-4">
+                  @if (product.imagen) {
+                    <img 
+                      [src]="product.imagen" 
+                      [alt]="product.nombre" 
+                      class="w-16 h-16 object-cover rounded-lg cursor-pointer hover:ring-2 hover:ring-green-500 transition-all" 
+                      (click)="openImagePreview(product.imagen, product.nombre, product.descripcion)"
+                    />
+                  } @else {
+                    <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <span class="text-gray-400 text-xs">Sin img</span>
+                    </div>
+                  }
+                </td>
+                <td class="px-6 py-4 text-sm">{{ product.categoria?.nombre || '-' }}</td>
+                <td class="px-6 py-4 text-sm font-semibold">Bs. {{ product.precio_venta_actual }}</td>
+                <td class="px-6 py-4">
+                  <button 
+                    (click)="openAddToCartModal(product)"
+                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center gap-2"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                    </svg>
+                    Agregar
+                  </button>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="bg-gray-50 px-6 py-4 border-t flex items-center justify-between">
+        <div class="text-sm text-gray-700">
+          Página {{ currentPage() }} de {{ totalPages() }}
+        </div>
+        <div class="flex gap-2">
+          <button (click)="previousPage()" [disabled]="currentPage() === 1" class="px-3 py-2 bg-white border rounded-lg text-sm disabled:opacity-50">Anterior</button>
+          <button (click)="nextPage()" [disabled]="currentPage() === totalPages()" class="px-3 py-2 bg-white border rounded-lg text-sm disabled:opacity-50">Siguiente</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Cart Sidebar -->
+  @if (showCart()) {
+    <app-cart-sidebar (closed)="toggleCart()" (proceedToSale)="openSalesForm()" />
+  }
+
+  <!-- Add to Cart Modal -->
+  @if (showAddToCartModal()) {
+    <app-add-to-cart-modal [product]="selectedProduct()!" (added)="handleProductAdded()" (cancelled)="closeAddToCartModal()" />
+  }
+
+  <!-- Sales Form -->
+  @if (showSalesForm()) {
+    <app-sales-form (completed)="handleSaleCompleted()" (cancelled)="closeSalesForm()" />
+  }
+
+  <!-- Image Preview Modal -->
+  @if (showImagePreview()) {
+    <app-image-preview-modal
+      [imageUrl]="previewImageUrl()"
+      [imageAlt]="previewImageAlt()"
+      [imageDescription]="previewImageDescription()"
+      (closed)="closeImagePreview()"
+    />
+  }
+</div>

@@ -8,11 +8,12 @@ import { CartService } from '../../../core/services/cart.service';
 import { AddToCartModalComponent } from './add-to-cart-modal.component';
 import { CartSidebarComponent } from './cart-sidebar.component';
 import { SalesFormComponent } from './sales-form.component';
+import { ImagePreviewModalComponent } from '../../../shared/components/image-preview-modal.component';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, AddToCartModalComponent, CartSidebarComponent, SalesFormComponent],
+  imports: [CommonModule, FormsModule, AddToCartModalComponent, CartSidebarComponent, SalesFormComponent, ImagePreviewModalComponent],
   template: `
     <div class="p-8">
       <div class="sticky top-0 z-10 bg-gray-50/95 backdrop-blur-sm py-4 border-b border-gray-300 mb-6 -mx-8 px-8 flex items-center justify-between">
@@ -119,7 +120,12 @@ import { SalesFormComponent } from './sales-form.component';
                     </td>
                     <td class="px-6 py-4">
                       @if (product.imagen) {
-                        <img [src]="product.imagen" [alt]="product.nombre" class="w-16 h-16 object-cover rounded-lg" />
+                        <img 
+                          [src]="product.imagen" 
+                          [alt]="product.nombre" 
+                          class="w-16 h-16 object-cover rounded-lg cursor-pointer hover:ring-2 hover:ring-primary-500 transition-all" 
+                          (click)="openImagePreview(product.imagen, product.nombre, product.descripcion)"
+                        />
                       } @else {
                         <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
                           <span class="text-gray-400 text-xs">Sin img</span>
@@ -172,6 +178,16 @@ import { SalesFormComponent } from './sales-form.component';
       @if (showSalesForm()) {
         <app-sales-form (completed)="handleSaleCompleted()" (cancelled)="closeSalesForm()" />
       }
+
+      <!-- Image Preview Modal -->
+      @if (showImagePreview()) {
+        <app-image-preview-modal
+          [imageUrl]="previewImageUrl()"
+          [imageAlt]="previewImageAlt()"
+          [imageDescription]="previewImageDescription()"
+          (closed)="closeImagePreview()"
+        />
+      }
     </div>
   `
 })
@@ -194,6 +210,12 @@ export class ProductsComponent implements OnInit {
   showAddToCartModal = signal(false);
   showSalesForm = signal(false);
   selectedProduct = signal<Product | null>(null);
+
+  // Image preview state
+  showImagePreview = signal(false);
+  previewImageUrl = signal('');
+  previewImageAlt = signal('');
+  previewImageDescription = signal('');
 
   filteredProducts = computed(() => {
     let products = this.allProducts();
@@ -300,5 +322,20 @@ export class ProductsComponent implements OnInit {
   handleSaleCompleted() {
     this.closeSalesForm();
     this.loadProducts();
+  }
+
+  // Image preview methods
+  openImagePreview(imageUrl: string, alt: string, description?: string): void {
+    this.previewImageUrl.set(imageUrl);
+    this.previewImageAlt.set(alt);
+    this.previewImageDescription.set(description || '');
+    this.showImagePreview.set(true);
+  }
+
+  closeImagePreview(): void {
+    this.showImagePreview.set(false);
+    this.previewImageUrl.set('');
+    this.previewImageAlt.set('');
+    this.previewImageDescription.set('');
   }
 }

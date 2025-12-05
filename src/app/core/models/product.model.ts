@@ -13,6 +13,7 @@ export interface Product {
     unidad_medida: string;
     marca?: string;
     precio_venta_actual: number;
+    precio_unitario_compra?: number;
     imagen?: string;
     estado: boolean;
     categoria?: Categoria;

@@ -1,9 +1,9 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './features/auth/login.component';
 import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
-import { PosLayoutComponent } from './layout/pos-layout/pos-layout.component';
+import { SalesManagerLayoutComponent } from './layout/sales-manager-layout/sales-manager-layout.component';
 import { AdminDashboardComponent } from './features/admin/admin-dashboard/admin-dashboard.component';
-import { PosComponent } from './features/pos/pos.component';
+import { SalesManagerDashboardComponent } from './features/sales-manager/sales-manager-dashboard/sales-manager-dashboard.component';
 import { authGuard, adminGuard, vendedorGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
@@ -47,13 +47,29 @@ export const routes: Routes = [
         ]
     },
     {
-        path: 'pos',
-        component: PosLayoutComponent,
+        path: 'sales-manager',
+        component: SalesManagerLayoutComponent,
         canActivate: [authGuard, vendedorGuard],
         children: [
             {
                 path: '',
-                component: PosComponent
+                component: SalesManagerDashboardComponent
+            },
+            {
+                path: 'products',
+                loadComponent: () => import('./features/sales-manager/products/sm-products.component').then(m => m.SmProductsComponent)
+            },
+            {
+                path: 'inventory',
+                loadComponent: () => import('./features/sales-manager/inventory/sm-inventory.component').then(m => m.SmInventoryComponent)
+            },
+            {
+                path: 'clients',
+                loadComponent: () => import('./features/admin/clients/clients.component').then(m => m.ClientsComponent)
+            },
+            {
+                path: 'sales',
+                loadComponent: () => import('./features/sales-manager/sales/sm-sales.component').then(m => m.SmSalesComponent)
             }
         ]
     },
@@ -67,3 +83,4 @@ export const routes: Routes = [
         redirectTo: '/login'
     }
 ];
+
