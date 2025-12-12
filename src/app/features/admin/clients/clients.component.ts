@@ -80,7 +80,7 @@ import { Cliente } from '../../../core/models/product.model';
           <table class="w-full">
             <thead class="bg-primary-600 border-b-2 border-primary-700">
               <tr>
-                <th class="px-6 py-4 text-left text-sm font-semibold text-white">Razón Social</th>
+                <th class="px-6 py-4 text-left text-sm font-semibold text-white">Nombre</th>
                 <th class="px-6 py-4 text-left text-sm font-semibold text-white">CI/NIT/RUC/RUT</th>
                 <th class="px-6 py-4 text-left text-sm font-semibold text-white">Teléfono</th>
                 <th class="px-6 py-4 text-left text-sm font-semibold text-white">Correo</th>
@@ -135,7 +135,7 @@ import { Cliente } from '../../../core/models/product.model';
             <form [formGroup]="clientForm" (ngSubmit)="onSubmit()">
               <div class="space-y-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Razón Social *</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
                   <input 
                     type="text" 
                     formControlName="razon_social"
@@ -143,7 +143,7 @@ import { Cliente } from '../../../core/models/product.model';
                     placeholder="Nombre del cliente"
                   />
                   @if (clientForm.get('razon_social')?.invalid && clientForm.get('razon_social')?.touched) {
-                    <p class="text-red-500 text-sm mt-1">La razón social es requerida</p>
+                    <p class="text-red-500 text-sm mt-1">El nombre es requerido</p>
                   }
                 </div>
 

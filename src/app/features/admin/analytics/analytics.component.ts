@@ -4,14 +4,15 @@ import { RouterLink } from '@angular/router';
 
 import { MetabaseChartComponent } from './components/metabase-chart.component';
 import { ChartData, ChartOptions } from 'chart.js';
-import { AnalyticsService, DeadStockItem, ProfitableProduct } from './analytics.service';
+import { AnalyticsService, DeadStockItem, ProfitableProduct, StockoutPrediction } from './analytics.service';
+import { BaseChartDirective } from 'ng2-charts';
 
-type TabType = 'resumen' | 'ventas' | 'inventario';
+type TabType = 'resumen' | 'ventas' | 'inventario' | 'predicciones' | 'historial';
 
 @Component({
   selector: 'app-analytics',
   standalone: true,
-  imports: [CommonModule, MetabaseChartComponent, RouterLink],
+  imports: [CommonModule, MetabaseChartComponent, RouterLink, BaseChartDirective],
   template: `
     <div class="h-full flex flex-col overflow-y-auto">
       <!-- Sticky Header -->
@@ -237,6 +238,180 @@ type TabType = 'resumen' | 'ventas' | 'inventario';
           </div>
         }
 
+
+        <!-- Tab: Predicciones -->
+        @if (activeTab() === 'predicciones') {
+          <div class="animate-fade-in">
+             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-6">
+               <div class="flex items-center justify-between mb-6">
+                 <div>
+                   <h3 class="text-xl font-bold text-gray-900">Predicción de Agotamiento de Stock</h3>
+                   <p class="text-gray-500 text-sm mt-1">Estimación basada en la velocidad de ventas de los últimos 30 días.</p>
+                 </div>
+                 <div class="flex items-center gap-2">
+                   <div class="bg-red-50 text-red-700 px-3 py-1 rounded-lg text-sm font-medium">
+                     <i class="fas fa-fire mr-1"></i> Alto Riesgo (< 7 días)
+                   </div>
+                   <div class="bg-yellow-50 text-yellow-700 px-3 py-1 rounded-lg text-sm font-medium">
+                     <i class="fas fa-clock mr-1"></i> Riesgo Medio (< 30 días)
+                   </div>
+                 </div>
+               </div>
+
+               <div class="overflow-x-auto">
+                 <table class="w-full">
+                   <thead class="bg-gray-50 border-b border-gray-100">
+                     <tr>
+                       <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Producto</th>
+                       <th class="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Stock Actual</th>
+                       <th class="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Ventas Diarias (Promedio)</th>
+                       <th class="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Días Estimados</th>
+                       <th class="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Compra Sugerida (30d)</th>
+                       <th class="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
+                     </tr>
+                   </thead>
+                   <tbody class="divide-y divide-gray-100">
+                     @for (item of predictions; track item.productId) {
+                       <tr class="hover:bg-gray-50 transition-colors">
+                         <td class="px-6 py-4">
+                           <div class="flex items-center">
+                             <div class="bg-gray-100 p-2 rounded-lg mr-3">
+                               <i class="fas fa-box text-gray-500"></i>
+                             </div>
+                             <div>
+                               <div class="text-sm font-medium text-gray-900">{{ item.productName }}</div>
+                             </div>
+                           </div>
+                         </td>
+                         <td class="px-6 py-4 text-center">
+                           <span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                             {{ item.currentStock }} u.
+                           </span>
+                         </td>
+                         <td class="px-6 py-4 text-center text-sm text-gray-600">
+                           {{ item.dailyVelocity.toFixed(2) }} u/día
+                         </td>
+                         <td class="px-6 py-4 text-center">
+                           <div class="flex items-center justify-center gap-1">
+                             <span class="text-lg font-bold" [class]="getRiskColor(item.daysLeft)">{{ item.daysLeft }}</span>
+                             <span class="text-xs text-gray-500">días</span>
+                           </div>
+                         </td>
+                         <td class="px-6 py-4 text-center">
+                             @if (item.suggestedPurchase && item.suggestedPurchase > 0) {
+                                 <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
+                                     +{{ item.suggestedPurchase }} u.
+                                 </span>
+                             } @else {
+                                 <span class="text-xs text-gray-400">-</span>
+                             }
+                         </td>
+                         <td class="px-6 py-4 text-center">
+                            @if (item.daysLeft <= 7) {
+                              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <i class="fas fa-exclamation-circle mr-1"></i> Crítico
+                              </span>
+                            } @else if (item.daysLeft <= 30) {
+                              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                <i class="fas fa-exclamation-triangle mr-1"></i> Atento
+                              </span>
+                            } @else {
+                              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <i class="fas fa-check-circle mr-1"></i> Estable
+                              </span>
+                            }
+                         </td>
+                       </tr>
+                     }
+                     @if (predictions.length === 0) {
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                                <div class="flex flex-col items-center">
+                                    <i class="fas fa-chart-line text-4xl mb-3 text-gray-300"></i>
+                                    <p>No hay suficientes datos de ventas para generar predicciones aún.</p>
+                                </div>
+                            </td>
+                        </tr>
+                     }
+                   </tbody>
+                 </table>
+               </div>
+             </div>
+          </div>
+        }
+
+        <!-- Tab: Historial -->
+        @if (activeTab() === 'historial') {
+          <div class="animate-fade-in">
+             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-6">
+                <!-- Filters -->
+                <div class="flex flex-col md:flex-row gap-4 mb-8">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+                       <div class="relative">
+                            <input 
+                                type="text"
+                                [value]="productSearchTerm()"
+                                (input)="onProductSearchInput($event)"
+                                (focus)="onProductFocus()"
+                                (blur)="closeProductDropdown()"
+                                placeholder="Buscar producto..."
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                            >
+                            @if (showProductDropdown() && filteredProducts.length > 0) {
+                                <div class="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                    @for (prod of filteredProducts; track prod.id) {
+                                        <div 
+                                            (click)="selectProduct(prod)"
+                                            class="px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm text-gray-700 hover:text-primary-600 transition-colors"
+                                        >
+                                            {{ prod.name }}
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Desde</label>
+                        <input 
+                            type="date" 
+                            [value]="historyStartDate()"
+                            (change)="historyStartDate.set($any($event).target.value); onHistoryDateChange()"
+                            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                        >
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Hasta</label>
+                        <input 
+                            type="date" 
+                            [value]="historyEndDate()"
+                            (change)="historyEndDate.set($any($event).target.value); onHistoryDateChange()"
+                            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                        >
+                    </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="h-[500px]">
+                    @if (historyProductId()) {
+                        <canvas 
+                            baseChart
+                            [data]="productHistoryData"
+                            [options]="productHistoryOptions"
+                            [type]="'line'"
+                        ></canvas>
+                    } @else {
+                        <div class="h-full flex flex-col items-center justify-center text-gray-400">
+                            <i class="fas fa-search text-4xl mb-2"></i>
+                            <p>Selecciona un producto para ver su historial</p>
+                        </div>
+                    }
+                </div>
+             </div>
+          </div>
+        }
+
       </div>
     </div>
   `,
@@ -271,10 +446,39 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
 
   tabs: { id: TabType; label: string; icon: string }[] = [
     { id: 'resumen', label: 'Resumen General', icon: 'fas fa-th-large' },
-    { id: 'ventas', label: 'Análisis de Ventas', icon: 'fas fa-chart-bar' }
+    { id: 'ventas', label: 'Análisis de Ventas', icon: 'fas fa-chart-bar' },
+    { id: 'predicciones', label: 'Predicciones AI', icon: 'fas fa-brain' },
+    { id: 'historial', label: 'Historial Producto', icon: 'fas fa-history' }
   ];
 
   constructor(private analyticsService: AnalyticsService) { }
+
+  ngOnInit() {
+    this.loadAnalytics();
+    this.startAutoRefresh();
+    this.loadProductList();
+  }
+
+  loadProductList() {
+    this.analyticsService.getProductsList().subscribe({
+      next: (data) => {
+        this.allProducts = data.map(p => ({ id: p.id, name: p.nombre }));
+      },
+      error: (err) => console.error('Error loading products list:', err)
+    });
+  }
+
+  ngOnDestroy() {
+    this.stopAutoRefresh();
+  }
+
+  startAutoRefresh() {
+    // Refresh every 5 minutes (300000 ms)
+    this.refreshInterval = setInterval(() => {
+      console.log('Auto-refreshing analytics data...');
+      this.loadAnalytics();
+    }, 300000);
+  }
 
   summary = {
     totalSales: 0,
@@ -363,6 +567,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
 
   deadStockData: DeadStockItem[] = [];
   profitableProducts: ProfitableProduct[] = [];
+  predictions: StockoutPrediction[] = [];
 
   // Pagination for dead stock
   deadStockCurrentPage = signal<number>(1);
@@ -494,22 +699,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     cutout: '65%'
   };
 
-  ngOnInit() {
-    this.loadAnalytics();
-    this.startAutoRefresh();
-  }
 
-  ngOnDestroy() {
-    this.stopAutoRefresh();
-  }
-
-  startAutoRefresh() {
-    // Refresh every 5 minutes (300000 ms)
-    this.refreshInterval = setInterval(() => {
-      console.log('Auto-refreshing analytics data...');
-      this.loadAnalytics();
-    }, 300000);
-  }
 
   stopAutoRefresh() {
     if (this.refreshInterval) {
@@ -607,6 +797,14 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       error: (err) => console.error('Error loading profitable products:', err)
     });
 
+    this.loadPermissions();
+  }
+
+  loadPermissions() {
+    this.analyticsService.getStockoutPrediction().subscribe({
+      next: (data) => this.predictions = data,
+      error: (err) => console.error('Error loading predictions:', err)
+    });
   }
 
   loadSalesTrend() {
@@ -698,8 +896,11 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   }
 
   onDeadStockItemsPerPageChange(event: any) {
-    this.deadStockItemsPerPage.set(parseInt(event.target.value, 10));
-    this.deadStockCurrentPage.set(1); // Reset to first page
+    const val = event.target.value;
+    if (val) {
+      this.deadStockItemsPerPage.set(parseInt(val, 10));
+      this.deadStockCurrentPage.set(1); // Reset to first page
+    }
   }
 
   // Pagination methods for profitable products
@@ -720,5 +921,125 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   onProfitableItemsPerPageChange(event: any) {
     this.profitableItemsPerPage.set(parseInt(event.target.value, 10));
     this.profitableCurrentPage.set(1);
+  }
+
+  getRiskColor(days: number): string {
+    if (days <= 7) return 'text-red-600';
+    if (days <= 30) return 'text-yellow-600';
+    return 'text-green-600';
+  }
+
+  // --- Product History Logic ---
+  historyProductId = signal<number | null>(null);
+  historyStartDate = signal<string>(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
+  historyEndDate = signal<string>(new Date().toISOString().split('T')[0]);
+  allProducts: { id: number, name: string }[] = [];
+  productSearchTerm = signal<string>('');
+  showProductDropdown = signal<boolean>(false);
+
+  public productHistoryData: ChartData<'line'> = {
+    labels: [],
+    datasets: [
+      {
+        label: 'Cantidad Vendida',
+        data: [],
+        borderColor: '#4f46e5',
+        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+        yAxisID: 'y'
+      },
+      {
+        label: 'Ingresos Totales',
+        data: [],
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        yAxisID: 'y1'
+      }
+    ]
+  };
+
+  public productHistoryOptions: ChartOptions<'line'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
+    plugins: {
+      legend: { display: true, position: 'top' },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const label = context.dataset.label || '';
+            const value = context.parsed.y;
+            if (label.includes('Ingresos')) {
+              return `${label}: Bs. ${(value || 0).toFixed(2)}`;
+            }
+            return `${label}: ${value}`;
+          }
+        }
+      }
+    },
+    scales: {
+      y: {
+        type: 'linear',
+        display: true,
+        position: 'left',
+        title: { display: true, text: 'Cantidad' }
+      },
+      y1: {
+        type: 'linear',
+        display: true,
+        position: 'right',
+        grid: { drawOnChartArea: false },
+        title: { display: true, text: 'Ingresos (Bs)' }
+      }
+    }
+  };
+
+  get filteredProducts() {
+    const term = this.productSearchTerm().toLowerCase();
+    return this.allProducts.filter(p => p.name.toLowerCase().includes(term));
+  }
+
+  onProductSearchInput(event: any) {
+    this.productSearchTerm.set(event.target.value);
+    this.showProductDropdown.set(true);
+  }
+
+  onProductFocus() {
+    this.showProductDropdown.set(true);
+  }
+
+  selectProduct(product: { id: number, name: string }) {
+    this.productSearchTerm.set(product.name);
+    this.historyProductId.set(product.id);
+    this.showProductDropdown.set(false);
+    this.loadProductHistory();
+  }
+
+  closeProductDropdown() {
+    // Small delay to allow click event on option to fire before closing
+    setTimeout(() => {
+      this.showProductDropdown.set(false);
+    }, 200);
+  }
+
+  onHistoryDateChange() {
+    this.loadProductHistory();
+  }
+
+  loadProductHistory() {
+    const pid = this.historyProductId();
+    if (!pid) return;
+
+    this.analyticsService.getProductSalesHistory(pid, this.historyStartDate(), this.historyEndDate())
+      .subscribe(data => {
+        this.productHistoryData.labels = data.map(d => d.date);
+        this.productHistoryData.datasets[0].data = data.map(d => d.quantity);
+        this.productHistoryData.datasets[1].data = data.map(d => d.total);
+
+        // Trigger chart update
+        this.productHistoryData = { ...this.productHistoryData };
+      });
   }
 }

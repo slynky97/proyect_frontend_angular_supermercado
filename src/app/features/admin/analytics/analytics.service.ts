@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export interface AnalyticsSummary {
     totalSales: number;
@@ -90,4 +91,33 @@ export class AnalyticsService {
     getTopProductsByRange(startDate: string, endDate: string): Observable<TopProducts> {
         return this.http.get<TopProducts>(`${this.apiUrl}/top-products-by-range?startDate=${startDate}&endDate=${endDate}`);
     }
+    getStockoutPrediction(days: number = 30): Observable<StockoutPrediction[]> {
+        return this.http.get<StockoutPrediction[]>(`${this.apiUrl}/stockout-prediction?days=${days}`);
+    }
+
+    getProductSalesHistory(productId: number, startDate: string, endDate: string): Observable<ProductHistoryItem[]> {
+        return this.http.get<ProductHistoryItem[]>(`${this.apiUrl}/product-history?productId=${productId}&startDate=${startDate}&endDate=${endDate}`);
+    }
+
+    getProductsList(): Observable<{ id: number, nombre: string }[]> {
+        return this.http.get<any>('http://localhost:3000/producto?limit=1000').pipe(
+            map(response => response.data)
+        );
+    }
+}
+
+export interface StockoutPrediction {
+    productId: number;
+    productName: string;
+    productImage: string;
+    currentStock: number;
+    dailyVelocity: number;
+    daysLeft: number;
+    suggestedPurchase?: number;
+}
+
+export interface ProductHistoryItem {
+    date: string;
+    quantity: number;
+    total: number;
 }
