@@ -104,19 +104,7 @@ type TabType = 'resumen' | 'ventas' | 'inventario';
               </div>
             </div>
 
-            <!-- Product Quantity Chart -->
-            <div class="h-[500px] mt-6">
-              <app-metabase-chart
-                metabaseUrl="http://localhost:3001/public/question/731a2619-4148-4199-a40f-105b38e8f743"
-              ></app-metabase-chart>
-            </div>
-          </div>
-        }
-
-        <!-- Tab: Ventas -->
-        @if (activeTab() === 'ventas') {
-          <div class="animate-fade-in">
-            <!-- Ventas Generales vs Cliente + Pie Chart Categorías -->
+            <!-- Fila: Ventas Generales vs Cliente + Pie Chart Categorías -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               <!-- Ventas Generales vs Ventas con Cliente -->
               <div class="h-[500px]">
@@ -133,9 +121,42 @@ type TabType = 'resumen' | 'ventas' | 'inventario';
               </div>
             </div>
 
-            <!-- Detalle Venta por Categoría (tabla completa) -->
+            <!-- Fila: Ventas por Usuario y Ganancia por Usuario -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <!-- Ventas por Usuario (Left) -->
+              <div class="h-[600px]">
+                <app-metabase-chart
+                  metabaseUrl="http://localhost:3001/public/question/bb8eafdd-b67c-462a-96a0-5069b678fc8c"
+                ></app-metabase-chart>
+              </div>
+
+              <!-- Ganancia por Usuario (Right) -->
+              <div class="h-[600px]">
+                <app-metabase-chart
+                  metabaseUrl="http://localhost:3001/public/question/ebe78f5b-0fe0-4ad9-8156-f96df7e7f2bb"
+                ></app-metabase-chart>
+              </div>
+            </div>
+
+            <!-- Product Quantity Chart -->
+            <div class="h-[500px] mt-6">
+              <app-metabase-chart
+                metabaseUrl="http://localhost:3001/public/question/731a2619-4148-4199-a40f-105b38e8f743"
+              ></app-metabase-chart>
+            </div>
+          </div>
+        }
+
+        <!-- Tab: Ventas -->
+        @if (activeTab() === 'ventas') {
+          <div class="animate-fade-in">
+
+
+
+
+            <!-- Detalle Venta por Categoría -->
             <div class="mb-6">
-              <div class="h-[500px]">
+              <div class="h-[600px]">
                 <app-metabase-chart
                   metabaseUrl="http://localhost:3001/public/question/4f47e63b-f7de-47a7-a784-1fda071121c4"
                 ></app-metabase-chart>

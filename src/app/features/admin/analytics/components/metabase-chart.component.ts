@@ -25,7 +25,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           [src]="safeUrl"
           frameborder="0"
           class="w-full absolute top-0 left-0"
-          style="height: calc(100% + 80px);"
+          style="height: calc(100% + 60px);"
           allowtransparency
         ></iframe>
       </div>

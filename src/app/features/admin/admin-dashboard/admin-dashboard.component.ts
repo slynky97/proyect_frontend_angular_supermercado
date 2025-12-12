@@ -4,6 +4,8 @@ import { ProductService } from '../../../core/services/product.service';
 import { NotaService } from '../../../core/services/nota.service';
 import { UserService } from '../../../core/services/user.service';
 
+import { AnalyticsService } from '../analytics/analytics.service';
+
 @Component({
     selector: 'app-admin-dashboard',
     standalone: true,
@@ -15,13 +17,15 @@ export class AdminDashboardComponent implements OnInit {
     private productService = inject(ProductService);
     private notaService = inject(NotaService);
     private userService = inject(UserService);
+    private analyticsService = inject(AnalyticsService);
 
     stats = signal({
         totalProducts: 0,
         totalSales: 0,
         totalUsers: 0,
         todayRevenue: 0,
-        todaySalesCount: 0
+        todaySalesCount: 0,
+        lowStockCount: 0
     });
 
     currentDate = signal(new Date());
@@ -39,8 +43,9 @@ export class AdminDashboardComponent implements OnInit {
         Promise.all([
             this.productService.getAll().toPromise(),
             this.notaService.getAll().toPromise(),
-            this.userService.getAll().toPromise()
-        ]).then(([products, notasResponse, users]) => {
+            this.userService.getAll().toPromise(),
+            this.analyticsService.getSummary('today').toPromise()
+        ]).then(([products, notasResponse, users, analyticsSummary]) => {
             const notas = notasResponse?.data || [];
             const today = new Date();
             today.setHours(0, 0, 0, 0); // Start of today
@@ -58,7 +63,8 @@ export class AdminDashboardComponent implements OnInit {
                 totalSales: notas.filter(n => n.tipo_nota === 'venta').length || 0,
                 totalUsers: users?.length || 0,
                 todayRevenue,
-                todaySalesCount: todaySales.length
+                todaySalesCount: todaySales.length,
+                lowStockCount: analyticsSummary?.criticalStockCount || 0
             });
             this.loading.set(false);
         }).catch(err => {
