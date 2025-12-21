@@ -1,7 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { LoginRequest, LoginResponse, User } from '../models/auth.model';
 
 @Injectable({
@@ -34,6 +35,17 @@ export class AuthService {
                     this.setUser(user);
                     this.currentUser.set(user);
                     this.isAuthenticated.set(true);
+                })
+            );
+    }
+
+    validateToken(): Observable<boolean> {
+        return this.http.get(`${this.API_URL}/auth/check-token`)
+            .pipe(
+                map(() => true),
+                catchError(() => {
+                    this.logout();
+                    return of(false);
                 })
             );
     }

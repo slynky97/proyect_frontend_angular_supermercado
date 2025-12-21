@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ProductService } from '../../../core/services/product.service';
 import { AlmacenService } from '../../../core/services/almacen.service';
 import { Almacen } from '../../../core/models/inventory.model';
@@ -66,6 +66,16 @@ import { Categoria, Product } from '../../../core/models/product.model';
               <div>
                 <label class="block text-sm font-medium mb-1">Precio de Compra (Ref.)</label>
                 <input type="number" formControlName="precio_unitario_compra" step="0.01" min="0" class="w-full border rounded px-3 py-2" placeholder="Opcional" />
+              </div>
+
+              <!-- Validation Error Message -->
+              <div class="col-span-2" *ngIf="form.errors?.['invalidPrice'] && (form.touched || form.dirty)">
+                 <p class="text-red-500 text-sm">El precio de venta tiene que ser mayor al precio de compra.</p>
+              </div>
+
+              <!-- Backend Error Message -->
+              <div class="col-span-2" *ngIf="errorMessage">
+                <p class="text-red-500 text-sm font-bold">{{ errorMessage }}</p>
               </div>
 
               <!-- Categoría -->
@@ -185,6 +195,7 @@ export class ProductStockFormComponent implements OnInit {
   form: FormGroup;
   imagePreview = signal<string | null>(null);
   saving = signal(false);
+  errorMessage: string | null = null;
 
   constructor() {
     this.form = this.fb.group({
@@ -198,7 +209,7 @@ export class ProductStockFormComponent implements OnInit {
       unidad_medida: ['', Validators.required],
       imagen: [''],
       stockAssignments: this.fb.array([])
-    });
+    }, { validators: this.priceValidator });
 
     // Watch imagen field for preview
     this.form.get('imagen')?.valueChanges.subscribe(url => {
@@ -243,6 +254,7 @@ export class ProductStockFormComponent implements OnInit {
   onSubmit(): void {
     if (this.form.invalid) return;
 
+    this.errorMessage = null;
     this.saving.set(true);
     const formValue = this.form.value;
 
@@ -268,7 +280,11 @@ export class ProductStockFormComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error updating product:', err);
-          alert('Error al actualizar el producto');
+          if (err.status === 400) {
+            this.errorMessage = 'El precio de venta tiene que ser mayor al precio de compra';
+          } else {
+            this.errorMessage = 'Error al actualizar el producto';
+          }
           this.saving.set(false);
         }
       });
@@ -307,7 +323,11 @@ export class ProductStockFormComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error creating product:', err);
-          alert('Error al crear el producto');
+          if (err.status === 400) {
+            this.errorMessage = 'El precio de venta tiene que ser mayor al precio de compra';
+          } else {
+            this.errorMessage = 'Error al crear el producto';
+          }
           this.saving.set(false);
         }
       });
@@ -317,4 +337,14 @@ export class ProductStockFormComponent implements OnInit {
   onCancel(): void {
     this.cancelled.emit();
   }
+
+  priceValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+    const venta = control.get('precio_venta_actual')?.value;
+    const compra = control.get('precio_unitario_compra')?.value;
+
+    if (venta !== null && compra !== null && +compra > +venta) {
+      return { invalidPrice: true };
+    }
+    return null;
+  };
 }

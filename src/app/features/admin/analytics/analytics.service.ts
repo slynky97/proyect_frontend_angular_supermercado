@@ -99,6 +99,10 @@ export class AnalyticsService {
         return this.http.get<ProductHistoryItem[]>(`${this.apiUrl}/product-history?productId=${productId}&startDate=${startDate}&endDate=${endDate}`);
     }
 
+    getClientAnalytics(startDate: string, endDate: string, search: string = ''): Observable<ClientAnalyticsItem[]> {
+        return this.http.get<ClientAnalyticsItem[]>(`${this.apiUrl}/client-analytics?startDate=${startDate}&endDate=${endDate}&search=${search}`);
+    }
+
     getProductsList(): Observable<{ id: number, nombre: string }[]> {
         return this.http.get<any>('http://localhost:3000/producto?limit=1000').pipe(
             map(response => response.data)
@@ -120,4 +124,13 @@ export interface ProductHistoryItem {
     date: string;
     quantity: number;
     total: number;
+}
+
+export interface ClientAnalyticsItem {
+    clientId: number;
+    clientName: string;
+    clientNit: string;
+    totalSpent: number;
+    purchaseCount: number;
+    averageTicket: number;
 }

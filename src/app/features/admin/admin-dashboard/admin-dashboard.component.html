@@ -1,11 +1,14 @@
-<div class="p-8 max-w-7xl mx-auto">
+<div id="dashboard-content" class="p-8 max-w-7xl mx-auto">
   <!-- Header Section -->
-  <div class="mb-8 animate-fade-in-down">
-    <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Panel de Ventas</h1>
-    <p class="text-gray-500 mt-1 text-base">
-      Bienvenido, <span class="font-medium text-gray-600">{{ currentDate() | date:'EEEE, d MMMM y' }}</span>
-    </p>
-  </div>
+  <div class="mb-8 animate-fade-in-down flex justify-between items-center">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Panel de Ventas</h1>
+      <p class="text-gray-500 mt-1 text-base">
+        Bienvenido, <span class="font-medium text-gray-600">{{ currentDate() | date:'EEEE, d MMMM y' }}</span>
+      </p>
+    </div>
+    </div>
+
 
   @if (loading()) {
     <div class="flex flex-col items-center justify-center py-20 animate-pulse">

@@ -4,6 +4,7 @@ import { ProductService } from '../../../core/services/product.service';
 import { NotaService } from '../../../core/services/nota.service';
 import { UserService } from '../../../core/services/user.service';
 
+
 import { AnalyticsService } from '../analytics/analytics.service';
 
 @Component({
@@ -18,6 +19,7 @@ export class AdminDashboardComponent implements OnInit {
     private notaService = inject(NotaService);
     private userService = inject(UserService);
     private analyticsService = inject(AnalyticsService);
+
 
     stats = signal({
         totalProducts: 0,
@@ -72,4 +74,6 @@ export class AdminDashboardComponent implements OnInit {
             this.loading.set(false);
         });
     }
+
+
 }

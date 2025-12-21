@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 
 import { MetabaseChartComponent } from './components/metabase-chart.component';
 import { ChartData, ChartOptions } from 'chart.js';
-import { AnalyticsService, DeadStockItem, ProfitableProduct, StockoutPrediction } from './analytics.service';
+import { AnalyticsService, DeadStockItem, ProfitableProduct, StockoutPrediction, ClientAnalyticsItem } from './analytics.service';
 import { BaseChartDirective } from 'ng2-charts';
 
 type TabType = 'resumen' | 'ventas' | 'inventario' | 'predicciones' | 'historial';
@@ -62,7 +62,13 @@ type TabType = 'resumen' | 'ventas' | 'inventario' | 'predicciones' | 'historial
                   </div>
                 </div>
                 @if (summary.outOfStockCount > 0) {
-                  <span class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Atención</span>
+                  <a 
+                    routerLink="/admin/inventory" 
+                    [queryParams]="{ stockLevel: 'out' }"
+                    class="bg-red-100 hover:bg-red-200 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full cursor-pointer transition-colors"
+                  >
+                    Atención
+                  </a>
                 }
               </div>
 
@@ -161,6 +167,88 @@ type TabType = 'resumen' | 'ventas' | 'inventario' | 'predicciones' | 'historial
                 <app-metabase-chart
                   metabaseUrl="http://localhost:3001/public/question/4f47e63b-f7de-47a7-a784-1fda071121c4"
                 ></app-metabase-chart>
+              </div>
+            </div>
+
+            <!-- Client Analysis Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+              <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div>
+                  <h3 class="text-lg font-bold text-gray-900">Top 10 Clientes y Venta General</h3>
+                  <p class="text-gray-500 text-sm">Clientes con mas compras y volumen de venta general</p>
+                </div>
+                
+                <div class="flex flex-col md:flex-row gap-3">
+                    <div class="relative">
+                        <input 
+                            type="text"
+                            [value]="clientSearchTerm()"
+                            (input)="onClientSearchInput($event)"
+                            placeholder="Buscar cliente o NIT..."
+                            class="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-primary-500 focus:border-primary-500 w-full md:w-64"
+                        >
+                        <i class="fas fa-search absolute left-3 top-2.5 text-gray-400"></i>
+                    </div>
+                    <div class="flex gap-2">
+                        <input 
+                            type="date"
+                            [value]="clientStartDate()"
+                            (change)="clientStartDate.set($any($event).target.value); onClientDateChange()"
+                            class="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                        >
+                        <input 
+                            type="date"
+                            [value]="clientEndDate()"
+                            (change)="clientEndDate.set($any($event).target.value); onClientDateChange()"
+                            class="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                        >
+                    </div>
+                </div>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="w-full">
+                  <thead class="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                      <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Cliente</th>
+                      <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">NIT/CI</th>
+                      <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Compras</th>
+                      <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Ticket Promedio</th>
+                      <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Total Gastado</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100">
+                    @for (client of clientAnalyticsData(); track client.clientId) {
+                      <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="font-medium text-gray-900">{{ client.clientName }}</div>
+                        </td>
+                         <td class="px-6 py-4 text-sm text-gray-500">
+                            {{ client.clientNit }}
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <span class="bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-full text-xs font-medium">
+                                {{ client.purchaseCount }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right text-sm text-gray-900 font-medium">
+                            Bs. {{ client.averageTicket.toFixed(2) }}
+                        </td>
+                        <td class="px-6 py-4 text-right text-sm font-bold text-gray-900">
+                            Bs. {{ client.totalSpent.toFixed(2) }}
+                        </td>
+                      </tr>
+                    }
+                    @if (clientAnalyticsData().length === 0) {
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                                <i class="fas fa-users text-4xl mb-3 text-gray-300"></i>
+                                <p>No se encontraron datos para los filtros seleccionados</p>
+                            </td>
+                        </tr>
+                    }
+                  </tbody>
+                </table>
               </div>
             </div>
 
@@ -798,6 +886,31 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     });
 
     this.loadPermissions();
+    this.loadClientAnalytics();
+  }
+
+  // Client Analytics State
+  clientAnalyticsData = signal<ClientAnalyticsItem[]>([]);
+  clientSearchTerm = signal<string>('');
+  clientStartDate = signal<string>(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
+  clientEndDate = signal<string>(new Date().toISOString().split('T')[0]);
+
+  async loadClientAnalytics() {
+    this.analyticsService.getClientAnalytics(this.clientStartDate(), this.clientEndDate(), this.clientSearchTerm())
+      .subscribe({
+        next: (data) => this.clientAnalyticsData.set(data),
+        error: (err) => console.error('Error loading client analytics:', err)
+      });
+  }
+
+  onClientSearchInput(event: any) {
+    this.clientSearchTerm.set(event.target.value);
+    // Debounce could be added here, currently just reloading
+    this.loadClientAnalytics();
+  }
+
+  onClientDateChange() {
+    this.loadClientAnalytics();
   }
 
   loadPermissions() {

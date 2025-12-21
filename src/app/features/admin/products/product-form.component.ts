@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, inject, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ProductService } from '../../../core/services/product.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { Product, Categoria } from '../../../core/models/product.model';
@@ -45,6 +45,16 @@ import { Product, Categoria } from '../../../core/models/product.model';
             <div>
               <label class="block text-sm font-medium mb-1">Precio Venta *</label>
               <input type="number" step="0.01" formControlName="precio_venta_actual" class="w-full border rounded px-2 py-1" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Precio Compra</label>
+              <input type="number" step="0.01" formControlName="precio_unitario_compra" class="w-full border rounded px-2 py-1" />
+            </div>
+            <div class="col-span-2" *ngIf="form.errors?.['invalidPrice'] && (form.touched || form.dirty)">
+              <p class="text-red-500 text-sm">El precio de venta tiene que ser mayor al precio de compra.</p>
+            </div>
+            <div class="col-span-2" *ngIf="errorMessage">
+              <p class="text-red-500 text-sm font-bold">{{ errorMessage }}</p>
             </div>
             <div>
               <label class="block text-sm font-medium mb-1">Categoría *</label>
@@ -93,6 +103,7 @@ export class ProductFormComponent implements OnChanges {
   categories: Categoria[] = [];
   form: FormGroup;
   imagePreview: string | null = null;
+  errorMessage: string | null = null;
 
   constructor() {
     this.form = this.fb.group({
@@ -103,9 +114,10 @@ export class ProductFormComponent implements OnChanges {
       unidad_medida: ['', Validators.required],
       marca: [''],
       precio_venta_actual: [0, [Validators.required, Validators.min(0)]],
+      precio_unitario_compra: [0, [Validators.min(0)]],
       categoriaId: [null, Validators.required],
       estado: [true]
-    });
+    }, { validators: this.priceValidator });
     this.loadCategories();
 
     // Watch for changes in the imagen field to update preview
@@ -124,6 +136,7 @@ export class ProductFormComponent implements OnChanges {
         unidad_medida: this.product.unidad_medida,
         marca: this.product.marca ?? '',
         precio_venta_actual: this.product.precio_venta_actual,
+        precio_unitario_compra: this.product.precio_unitario_compra ?? 0,
         categoriaId: this.product.categoria?.id ?? null,
         estado: this.product.estado
       });
@@ -140,6 +153,7 @@ export class ProductFormComponent implements OnChanges {
 
   onSubmit(): void {
     if (this.form.invalid) return;
+    this.errorMessage = null;
     const formValue = this.form.value;
     const payload: any = {
       nombre: formValue.nombre,
@@ -149,6 +163,7 @@ export class ProductFormComponent implements OnChanges {
       unidad_medida: formValue.unidad_medida,
       marca: formValue.marca || undefined,
       precio_venta_actual: +formValue.precio_venta_actual,
+      precio_unitario_compra: +formValue.precio_unitario_compra,
       estado: formValue.estado,
       categoria: +formValue.categoriaId
     };
@@ -156,13 +171,37 @@ export class ProductFormComponent implements OnChanges {
     if (this.product && this.product.id) {
       this.productService.update(this.product.id, payload).subscribe({
         next: updated => this.saved.emit(updated),
-        error: err => console.error('Error updating product', err)
+        error: err => {
+          console.error('Error updating product', err);
+          if (err.status === 400) {
+            this.errorMessage = 'El precio de venta tiene que ser mayor al precio de compra';
+          } else {
+            this.errorMessage = 'Error al actualizar el producto';
+          }
+        }
       });
     } else {
       this.productService.create(payload).subscribe({
         next: created => this.saved.emit(created),
-        error: err => console.error('Error creating product', err)
+        error: err => {
+          console.error('Error creating product', err);
+          if (err.status === 400) {
+            this.errorMessage = 'El precio de venta tiene que ser mayor al precio de compra';
+          } else {
+            this.errorMessage = 'Error al crear el producto';
+          }
+        }
       });
     }
   }
+
+  priceValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+    const venta = control.get('precio_venta_actual')?.value;
+    const compra = control.get('precio_unitario_compra')?.value;
+
+    if (venta !== null && compra !== null && +compra > +venta) {
+      return { invalidPrice: true };
+    }
+    return null;
+  };
 }

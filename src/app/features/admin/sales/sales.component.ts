@@ -5,6 +5,8 @@ import { NotaService } from '../../../core/services/nota.service';
 import { Nota } from '../../../core/models/product.model';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 @Component({
   selector: 'app-sales',
@@ -59,14 +61,22 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
                 class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
-          </div>
-          <div class="mt-4 flex justify-end gap-2">
-            <button 
-              (click)="clearFilters()" 
-              class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
-            >
-              Limpiar Filtros
-            </button>
+
+            <div class="flex items-end gap-3">
+              <button 
+                (click)="clearFilters()" 
+                class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium whitespace-nowrap"
+              >
+                Limpiar Filtros
+              </button>
+              <button 
+                (click)="downloadPDF()" 
+                class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
+              >
+                <i class="fas fa-file-pdf"></i>
+                Descargar PDF
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -349,6 +359,58 @@ export class SalesComponent implements OnInit {
     this.fechaInicioFilter.set('');
     this.fechaFinFilter.set('');
     this.currentPage.set(1);
+  }
+
+  downloadPDF() {
+    const doc = new jsPDF();
+    const sales = this.filteredSales();
+    const headers = [['ID', 'Fecha', 'Cliente', 'NIT/CI', 'Vendedor', 'Total']];
+
+    const data = sales.map(sale => [
+      sale.id,
+      new Date(sale.fecha).toLocaleString(),
+      sale.cliente?.razon_social || 'Venta General',
+      sale.cliente?.ci_nit_ruc_rut || '-',
+      sale.user?.name || sale.user?.email || 'Desconocido',
+      `Bs. ${(+sale.total_calculado).toFixed(2)}`
+    ]);
+
+    // Title
+    doc.setFontSize(18);
+    doc.text('Reporte de Ventas', 14, 22);
+
+    // Filter context if any
+    doc.setFontSize(10);
+    let yPos = 30;
+
+    if (this.fechaInicioFilter() || this.fechaFinFilter()) {
+      const start = this.fechaInicioFilter() || 'Inicio';
+      const end = this.fechaFinFilter() || 'Hoy';
+      doc.text(`Período: ${start} - ${end}`, 14, yPos);
+      yPos += 7;
+    }
+
+    if (this.clienteFilter()) {
+      doc.text(`Filtro Cliente: ${this.clienteFilter()}`, 14, yPos);
+      yPos += 7;
+    }
+
+    // Totals
+    const totalAmount = sales.reduce((sum, sale) => sum + (+sale.total_calculado), 0);
+    doc.text(`Total Ventas: ${sales.length}`, 14, yPos);
+    doc.text(`Monto Total: Bs. ${totalAmount.toFixed(2)}`, 100, yPos);
+
+    autoTable(doc, {
+      head: headers,
+      body: data,
+      startY: yPos + 10,
+      theme: 'grid',
+      headStyles: { fillColor: [79, 70, 229] }, // Primary color
+      alternateRowStyles: { fillColor: [249, 250, 251] }
+    });
+
+    const dateStr = new Date().toISOString().split('T')[0];
+    doc.save(`Ventas_${dateStr}.pdf`);
   }
 
   // Pagination methods

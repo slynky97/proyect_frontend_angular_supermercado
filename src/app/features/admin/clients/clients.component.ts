@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { ClienteService } from '../../../core/services/cliente.service';
 import { Cliente } from '../../../core/models/product.model';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 @Component({
   selector: 'app-clients',
@@ -60,12 +62,20 @@ import { Cliente } from '../../../core/models/product.model';
               <option value="false">Inactivos</option>
             </select>
           </div>
-          <div class="flex items-end">
+
+          <div class="flex items-end gap-3">
             <button 
               (click)="clearFilters()" 
-              class="w-full md:w-auto px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
             >
               Limpiar Filtros
+            </button>
+            <button 
+              (click)="downloadPDF()" 
+              class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center justify-center gap-2"
+            >
+              <i class="fas fa-file-pdf"></i>
+              Descargar PDF
             </button>
           </div>
         </div>
@@ -131,6 +141,12 @@ import { Cliente } from '../../../core/models/product.model';
                 </svg>
               </button>
             </div>
+            
+            @if (errorMessage()) {
+              <div class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                {{ errorMessage() }}
+              </div>
+            }
 
             <form [formGroup]="clientForm" (ngSubmit)="onSubmit()">
               <div class="space-y-4">
@@ -235,6 +251,7 @@ export class ClientsComponent implements OnInit {
   showForm = signal(false);
   saving = signal(false);
   editingClient = signal<Cliente | null>(null);
+  errorMessage = signal<string | null>(null);
 
   // Filters
   searchTerm = signal('');
@@ -245,6 +262,53 @@ export class ClientsComponent implements OnInit {
     this.searchTerm.set('');
     this.searchCI.set('');
     this.statusFilter.set('');
+  }
+
+  downloadPDF() {
+    const doc = new jsPDF();
+    const clients = this.filteredClients();
+    const headers = [['Nombre', 'CI/NIT/RUC', 'Teléfono', 'Correo', 'Dirección', 'Estado']];
+
+    const data = clients.map(client => [
+      client.razon_social,
+      client.ci_nit_ruc_rut || '-',
+      client.telefono || '-',
+      client.correo || '-',
+      client.direccion || '-',
+      client.estado ? 'Activo' : 'Inactivo'
+    ]);
+
+    // Title
+    doc.setFontSize(18);
+    doc.text('Reporte de Clientes', 14, 22);
+
+    // Filter context
+    doc.setFontSize(10);
+    let yPos = 30;
+
+    if (this.searchTerm()) {
+      doc.text(`Filtro Nombre: ${this.searchTerm()}`, 14, yPos);
+      yPos += 7;
+    }
+
+    if (this.searchCI()) {
+      doc.text(`Filtro CI/NIT: ${this.searchCI()}`, 14, yPos);
+      yPos += 7;
+    }
+
+    doc.text(`Total Clientes: ${clients.length}`, 14, yPos);
+
+    autoTable(doc, {
+      head: headers,
+      body: data,
+      startY: yPos + 10,
+      theme: 'grid',
+      headStyles: { fillColor: [79, 70, 229] },
+      alternateRowStyles: { fillColor: [249, 250, 251] }
+    });
+
+    const dateStr = new Date().toISOString().split('T')[0];
+    doc.save(`Clientes_${dateStr}.pdf`);
   }
 
   filteredClients = computed(() => {
@@ -295,6 +359,7 @@ export class ClientsComponent implements OnInit {
 
   openCreateForm() {
     this.editingClient.set(null);
+    this.errorMessage.set(null);
     this.clientForm.reset({ estado: true });
     this.showForm.set(true);
   }
@@ -338,7 +403,11 @@ export class ClientsComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error updating client:', err);
-          alert('Error al actualizar cliente');
+          if (err.error && err.error.message) {
+            this.errorMessage.set(Array.isArray(err.error.message) ? err.error.message[0] : err.error.message);
+          } else {
+            this.errorMessage.set('Error al actualizar cliente');
+          }
           this.saving.set(false);
         }
       });
@@ -352,7 +421,11 @@ export class ClientsComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error creating client:', err);
-          alert('Error al crear cliente');
+          if (err.error && err.error.message) {
+            this.errorMessage.set(Array.isArray(err.error.message) ? err.error.message[0] : err.error.message);
+          } else {
+            this.errorMessage.set('Error al crear cliente');
+          }
           this.saving.set(false);
         }
       });
