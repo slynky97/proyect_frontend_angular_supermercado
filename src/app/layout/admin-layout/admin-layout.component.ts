@@ -18,12 +18,12 @@ export class AdminLayoutComponent {
 
     menuItems = [
         { icon: 'dashboard', label: 'Dashboard', route: '/admin' },
-        { icon: 'users', label: 'Usuarios', route: '/admin/users' },
-        { icon: 'package', label: 'Productos', route: '/admin/products' },
-        { icon: 'warehouse', label: 'Inventario', route: '/admin/inventory' },
-        { icon: 'user-group', label: 'Clientes', route: '/admin/clients' },
-        { icon: 'receipt', label: 'Ventas', route: '/admin/sales' },
-        { icon: 'chart-bar', label: 'Análisis', route: '/admin/analytics' },
+        { icon: 'users', label: 'Usuarios', route: '/admin/usuarios' },
+        { icon: 'package', label: 'Productos', route: '/admin/productos' },
+        { icon: 'warehouse', label: 'Inventario', route: '/admin/inventario' },
+        { icon: 'user-group', label: 'Clientes', route: '/admin/clientes' },
+        { icon: 'receipt', label: 'Ventas', route: '/admin/ventas' },
+        { icon: 'chart-bar', label: 'Análisis', route: '/admin/analisis' },
     ];
 
     toggleSidebar() {

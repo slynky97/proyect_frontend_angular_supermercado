@@ -21,33 +21,33 @@ export const routes: Routes = [
                 component: AdminDashboardComponent
             },
             {
-                path: 'users',
+                path: 'usuarios',
                 loadComponent: () => import('./features/admin/users/users.component').then(m => m.UsersComponent)
             },
             {
-                path: 'products',
+                path: 'productos',
                 loadComponent: () => import('./features/admin/products/products.component').then(m => m.ProductsComponent)
             },
             {
-                path: 'inventory',
+                path: 'inventario',
                 loadComponent: () => import('./features/admin/inventory/inventory.component').then(m => m.InventoryComponent)
             },
             {
-                path: 'clients',
+                path: 'clientes',
                 loadComponent: () => import('./features/admin/clients/clients.component').then(m => m.ClientsComponent)
             },
             {
-                path: 'sales',
+                path: 'ventas',
                 loadComponent: () => import('./features/admin/sales/sales.component').then(m => m.SalesComponent)
             },
             {
-                path: 'analytics',
+                path: 'analisis',
                 loadComponent: () => import('./features/admin/analytics/analytics.component').then(m => m.AnalyticsComponent)
             }
         ]
     },
     {
-        path: 'sales-manager',
+        path: 'usuario',
         component: SalesManagerLayoutComponent,
         canActivate: [authGuard, vendedorGuard],
         children: [
@@ -56,19 +56,19 @@ export const routes: Routes = [
                 component: SalesManagerDashboardComponent
             },
             {
-                path: 'products',
+                path: 'productos',
                 loadComponent: () => import('./features/sales-manager/products/sm-products.component').then(m => m.SmProductsComponent)
             },
             {
-                path: 'inventory',
+                path: 'inventario',
                 loadComponent: () => import('./features/sales-manager/inventory/sm-inventory.component').then(m => m.SmInventoryComponent)
             },
             {
-                path: 'clients',
+                path: 'clientes',
                 loadComponent: () => import('./features/admin/clients/clients.component').then(m => m.ClientsComponent)
             },
             {
-                path: 'sales',
+                path: 'ventas',
                 loadComponent: () => import('./features/sales-manager/sales/sm-sales.component').then(m => m.SmSalesComponent)
             }
         ]

@@ -40,7 +40,7 @@ export class LoginComponent {
                 if (this.authService.isAdmin()) {
                     this.router.navigate(['/admin']);
                 } else if (this.authService.isVendedor()) {
-                    this.router.navigate(['/sales-manager']);
+                    this.router.navigate(['/usuario']);
                 } else {
                     this.router.navigate(['/']);
                 }

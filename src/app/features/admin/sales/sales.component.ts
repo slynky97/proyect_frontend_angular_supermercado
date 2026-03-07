@@ -62,12 +62,20 @@ import autoTable from 'jspdf-autotable';
               />
             </div>
 
-            <div class="flex items-end gap-3">
+            <div class="md:col-span-4 flex justify-end gap-3">
               <button 
                 (click)="clearFilters()" 
                 class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium whitespace-nowrap"
               >
                 Limpiar Filtros
+              </button>
+              <button 
+                (click)="triggerManualReport()" 
+                class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
+                title="Enviar resporte de ayer"
+              >
+                <i class="fas fa-envelope"></i>
+                Reporte Ayer
               </button>
               <button 
                 (click)="downloadPDF()" 
@@ -359,6 +367,29 @@ export class SalesComponent implements OnInit {
     this.fechaInicioFilter.set('');
     this.fechaFinFilter.set('');
     this.currentPage.set(1);
+  }
+
+  triggerManualReport() {
+    // Manual trigger implies user wants "Yesterday's" missing report, or just "Daily Report".
+    // Let's assume they want yesterday's report as per conversation.
+    if (!confirm('¿Enviar el reporte diario de ventas de AYER por correo?')) return;
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    this.notaService.sendDailyReport(yesterday.toISOString()).subscribe({
+      next: (res: any) => {
+        if (res.success) {
+          alert(`Reporte enviado. Ventas: ${res.count}, Ingreso: Bs. ${res.revenue}`);
+        } else {
+          alert('No se encontraron ventas para ayer.');
+        }
+      },
+      error: (err) => {
+        console.error(err);
+        alert('Error al enviar el reporte.');
+      }
+    });
   }
 
   downloadPDF() {

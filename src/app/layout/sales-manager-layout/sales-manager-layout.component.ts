@@ -17,11 +17,11 @@ export class SalesManagerLayoutComponent {
     sidebarOpen = signal(true);
 
     menuItems = [
-        { icon: 'dashboard', label: 'Dashboard', route: '/sales-manager' },
-        { icon: 'package', label: 'Productos', route: '/sales-manager/products' },
-        { icon: 'warehouse', label: 'Inventario', route: '/sales-manager/inventory' },
-        { icon: 'user-group', label: 'Clientes', route: '/sales-manager/clients' },
-        { icon: 'receipt', label: 'Ventas', route: '/sales-manager/sales' },
+        { icon: 'dashboard', label: 'Dashboard', route: '/usuario' },
+        { icon: 'package', label: 'Productos', route: '/usuario/productos' },
+        { icon: 'warehouse', label: 'Inventario', route: '/usuario/inventario' },
+        { icon: 'user-group', label: 'Clientes', route: '/usuario/clientes' },
+        { icon: 'receipt', label: 'Ventas', route: '/usuario/ventas' },
     ];
 
     toggleSidebar() {

@@ -19,7 +19,7 @@ type TabType = 'resumen' | 'ventas' | 'inventario' | 'predicciones' | 'historial
       <div class="sticky top-0 bg-white z-50 border-b border-gray-100 shadow-sm px-8">
         <div class="flex flex-col md:flex-row md:items-center justify-between pt-8 mb-4 gap-4">
           <div>
-            <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Analytics</h1>
+            <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Analisis</h1>
             <p class="text-gray-500 mt-1">Visión clara del estado de tu empresa</p>
           </div>
 
@@ -63,7 +63,7 @@ type TabType = 'resumen' | 'ventas' | 'inventario' | 'predicciones' | 'historial
                 </div>
                 @if (summary.outOfStockCount > 0) {
                   <a 
-                    routerLink="/admin/inventory" 
+                    routerLink="/admin/inventario" 
                     [queryParams]="{ stockLevel: 'out' }"
                     class="bg-red-100 hover:bg-red-200 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full cursor-pointer transition-colors"
                   >
@@ -84,7 +84,7 @@ type TabType = 'resumen' | 'ventas' | 'inventario' | 'predicciones' | 'historial
                 </div>
                 @if (summary.criticalStockCount > 0) {
                   <a 
-                    routerLink="/admin/inventory" 
+                    routerLink="/admin/inventario" 
                     [queryParams]="{ stockLevel: 'low' }"
                     class="bg-orange-100 hover:bg-orange-200 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded-full cursor-pointer transition-colors"
                   >
@@ -318,7 +318,7 @@ type TabType = 'resumen' | 'ventas' | 'inventario' | 'predicciones' | 'historial
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
               <h3 class="text-lg font-bold text-gray-900 mb-2">Gestión de Inventario</h3>
               <p class="text-gray-500 mb-6">Para ver el detalle completo de productos y realizar ajustes, ve al módulo de Inventario.</p>
-              <a href="/admin/inventory" class="inline-flex items-center justify-center px-5 py-3 text-base font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors">
+              <a href="/admin/inventario" class="inline-flex items-center justify-center px-5 py-3 text-base font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors">
                 Ir al Inventario
                 <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
               </a>
@@ -450,7 +450,7 @@ type TabType = 'resumen' | 'ventas' | 'inventario' | 'predicciones' | 'historial
                                 <div class="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                                     @for (prod of filteredProducts; track prod.id) {
                                         <div 
-                                            (click)="selectProduct(prod)"
+                                            (mousedown)="selectProduct(prod)"
                                             class="px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm text-gray-700 hover:text-primary-600 transition-colors"
                                         >
                                             {{ prod.name }}
@@ -535,7 +535,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   tabs: { id: TabType; label: string; icon: string }[] = [
     { id: 'resumen', label: 'Resumen General', icon: 'fas fa-th-large' },
     { id: 'ventas', label: 'Análisis de Ventas', icon: 'fas fa-chart-bar' },
-    { id: 'predicciones', label: 'Predicciones AI', icon: 'fas fa-brain' },
+    { id: 'predicciones', label: 'Predicciones', icon: 'fas fa-brain' },
     { id: 'historial', label: 'Historial Producto', icon: 'fas fa-history' }
   ];
 

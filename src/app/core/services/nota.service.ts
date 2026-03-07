@@ -29,4 +29,8 @@ export class NotaService {
     delete(id: number): Observable<void> {
         return this.http.delete<void>(`${this.API_URL}/${id}`);
     }
+
+    sendDailyReport(date?: string): Observable<any> {
+        return this.http.post('http://localhost:3000/email/daily-summary', { date });
+    }
 }
