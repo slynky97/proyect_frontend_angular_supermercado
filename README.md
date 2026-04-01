@@ -1,59 +1,66 @@
-# SupermercadoApp
+# 🛒 SupermercadoApp - Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.0.
+Este es el proyecto frontend para la aplicación de gestión de supermercados e inventarios. Ha sido generado y desarrollado utilizando [Angular CLI](https://github.com/angular/angular-cli) versión 21.0.0.
 
-## Development server
+## 📋 Requisitos Previos
 
-To start a local development server, run:
+Asegúrate de tener instalados los siguientes componentes en tu entorno local:
+- [Node.js](https://nodejs.org/) (versión 18 o superior recomendada)
+- [Angular CLI](https://angular.dev/tools/cli) (se instala globalmente usando el comando `npm install -g @angular/cli`)
 
-```bash
-ng serve
-```
+## 🚀 Instalación
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+1. Posiciónate en la carpeta raíz del proyecto (`front-end`).
+2. Instala todas las dependencias necesarias ejecutando:
 
 ```bash
-ng generate component component-name
+npm install
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## 🛠️ Servidor de Desarrollo
 
-```bash
-ng generate --help
-```
+Para iniciar la aplicación en tu entorno local y ver los cambios en tiempo real:
 
-## Building
+1. Ejecuta el siguiente comando:
+   ```bash
+   ng serve
+   ```
+2. Abre tu navegador web y dirígete a `http://localhost:4200/`.
 
-To build the project run:
+*La aplicación se recargará automáticamente cada vez que guardes modificaciones en los archivos fuente de tu código.*
+
+## 📦 Construcción (Build) para Producción
+
+Para compilar el proyecto y prepararlo para un entorno de producción o despliegue:
 
 ```bash
 ng build
 ```
+Esto compilará la aplicación y almacenará los archivos optimizados dentro de la carpeta `dist/`. La configuración por defecto optimiza tu aplicación para asegurar el máximo rendimiento y menor tiempo de carga al usuario final.
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## 🏗️ Generación de Código (Scaffolding)
 
-## Running unit tests
+Angular CLI incluye potentes herramientas para generar rápidamente estructuras de código. Para crear un nuevo componente, ejecuta:
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+```bash
+ng generate component nombre-del-componente
+```
 
+*Nota: También puedes generar otros elementos como `services`, `directives` o `pipes`. Para ver todas las opciones disponibles, ejecuta `ng generate --help`.*
+
+## 🧪 Pruebas (Testing)
+
+**Pruebas Unitarias**  
+Para ejecutar las pruebas unitarias usando `Karma`, utiliza el siguiente comando:
 ```bash
 ng test
 ```
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
+**Pruebas End-to-End (e2e)**  
+Para ejecutar las pruebas de integración (requiere haber configurado previamente un framework de e2e):
 ```bash
 ng e2e
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+---
+*Para obtener más información sobre los comandos, visita la [Documentación Oficial de Angular CLI](https://angular.dev/tools/cli).*
