@@ -2,6 +2,7 @@ import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { UserService } from '../../../core/services/user.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { User } from '../../../core/models/auth.model';
 
 @Component({
@@ -44,7 +45,9 @@ import { User } from '../../../core/models/auth.model';
             class="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           >
             <option value="">Todos los roles</option>
-            <option value="ADMINISTRADOR">ADMINISTRADOR</option>
+            @if (isGerente()) {
+              <option value="ADMINISTRADOR">ADMINISTRADOR</option>
+            }
             <option value="Venta">Venta</option>
           </select>
         </div>
@@ -89,10 +92,20 @@ import { User } from '../../../core/models/auth.model';
                       {{ user.estado ? 'Activo' : 'Inactivo' }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 text-sm">
+                  <td class="px-6 py-4 text-sm flex gap-3 items-center">
                     <button (click)="editUser(user)" class="text-primary-600 hover:text-primary-800 font-medium">
                       Editar
                     </button>
+                    @if (user.roles && user.roles.length > 0 && user.roles[0].name === 'Venta') {
+                      <button (click)="deleteUser(user)" class="text-red-500 hover:text-red-700 font-medium">
+                        Eliminar
+                      </button>
+                    }
+                    @if (isGerente() && user.roles && user.roles.length > 0 && user.roles[0].name === 'ADMINISTRADOR') {
+                      <button (click)="deleteUser(user)" class="text-red-500 hover:text-red-700 font-medium">
+                        Eliminar
+                      </button>
+                    }
                   </td>
                 </tr>
               }
@@ -163,7 +176,9 @@ import { User } from '../../../core/models/auth.model';
                     class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   >
                     <option value="">Seleccionar rol...</option>
-                    <option value="2">ADMINISTRADOR</option>
+                    @if (isGerente()) {
+                      <option value="2">Administrador</option>
+                    }
                     <option value="3">Venta</option>
                   </select>
                 </div>
@@ -207,6 +222,7 @@ import { User } from '../../../core/models/auth.model';
 })
 export class UsersComponent implements OnInit {
   private userService = inject(UserService);
+  private authService = inject(AuthService);
   private fb = inject(FormBuilder);
 
   users = signal<User[]>([]);
@@ -222,6 +238,11 @@ export class UsersComponent implements OnInit {
   clearFilters() {
     this.searchTerm.set('');
     this.roleFilter.set('');
+  }
+
+  isGerente(): boolean {
+    const currentUser = this.authService.currentUser();
+    return currentUser?.email === 'gerente@mail.com' || this.authService.hasRole('gerente') || this.authService.hasRole('GERENTE');
   }
 
   filteredUsers = computed(() => {
@@ -340,6 +361,20 @@ export class UsersComponent implements OnInit {
           console.error('Error creating user:', err);
           alert('Error al crear usuario: ' + (err.error?.message || 'Error desconocido'));
           this.saving.set(false);
+        }
+      });
+    }
+  }
+
+  deleteUser(user: User) {
+    if (confirm(`¿Estás seguro de que deseas eliminar al usuario ${user.name || user.email}?`)) {
+      this.userService.delete(user.id).subscribe({
+        next: () => {
+          this.loadUsers();
+        },
+        error: (err) => {
+          console.error('Error deleting user:', err);
+          alert('Error al eliminar al usuario. Es posible que tenga registros asociados.');
         }
       });
     }

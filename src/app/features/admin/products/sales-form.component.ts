@@ -214,7 +214,7 @@ export class SalesFormComponent implements OnInit {
 
   private loadClients() {
     this.clienteService.getAll().subscribe({
-      next: (clients) => this.clients.set(clients),
+      next: (clients) => this.clients.set(clients.filter(c => c.estado && c.tipo === 'cliente')),
       error: (err) => console.error('Error loading clients:', err)
     });
   }

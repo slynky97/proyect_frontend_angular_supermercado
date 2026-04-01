@@ -131,20 +131,20 @@ interface StockRow {
       } @else {
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
           <div class="overflow-x-auto">
-            <table class="w-full">
+            <table class="w-full table-fixed min-w-[1024px]">
               <thead class="bg-primary-600 border-b-2 border-primary-700">
                 <tr>
-                  <th class="px-6 py-4 text-left text-sm font-semibold text-white sticky left-0 bg-primary-600 z-30">Producto</th>
-                  <th class="px-6 py-4 text-left text-sm font-semibold text-white">Imagen</th>
-                  <th class="px-6 py-4 text-left text-sm font-semibold text-white">Categoría</th>
-                  <th class="px-6 py-4 text-left text-sm font-semibold text-white">Unidad</th>
+                  <th class="w-full px-6 py-4 text-left text-sm font-semibold text-white sticky left-0 bg-primary-600 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Producto</th>
+                  <th class="w-24 px-6 py-4 text-center text-sm font-semibold text-white truncate">Imagen</th>
+                  <th class="w-32 px-6 py-4 text-left text-sm font-semibold text-white truncate">Categoría</th>
+                  <th class="w-28 px-6 py-4 text-left text-sm font-semibold text-white truncate">Unidad</th>
                   @for (warehouse of warehouses(); track warehouse.id) {
-                    <th class="px-6 py-4 text-center text-sm font-semibold text-white bg-primary-600">
-                      {{ warehouse.nombre }}
-                      <div class="text-xs font-normal text-gray-200">{{ warehouse.sucursal?.nombre || '' }}</div>
+                    <th class="w-32 px-6 py-4 text-center text-sm font-semibold text-white bg-primary-600">
+                      <div class="truncate" [title]="warehouse.nombre">{{ warehouse.nombre }}</div>
+                      <div class="text-xs font-normal text-gray-200 truncate" [title]="warehouse.sucursal?.nombre || ''">{{ warehouse.sucursal?.nombre || '' }}</div>
                     </th>
                   }
-                  <th class="px-6 py-4 text-center text-sm font-semibold text-white bg-primary-600">Total</th>
+                  <th class="w-24 px-6 py-4 text-center text-sm font-semibold text-white bg-primary-600 truncate">Total</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-200">
@@ -163,41 +163,47 @@ interface StockRow {
                 } @else {
                   @for (row of paginatedStockRows(); track row.productId) {
                     <tr class="hover:bg-gray-50 transition-colors">
-                      <td class="px-6 py-4 sticky left-0 bg-white z-20 shadow-sm">
-                        <div class="flex items-center gap-2">
-                          <div class="font-medium text-gray-900">{{ row.productName }}</div>
-                          <button 
-                            (click)="editProduct(row.productId)"
-                            class="text-gray-400 hover:text-primary-600 transition-colors"
-                            title="Editar producto"
-                          >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-                            </svg>
-                          </button>
-                        </div>
-                        <div class="text-sm text-gray-600">{{ row.productDescription }}</div>
-                        @if (row.productBrand) {
-                          <div class="text-xs text-gray-500 mt-1">Marca: {{ row.productBrand }}</div>
-                        }
-                      </td>
-                      <td class="px-6 py-4">
-                        @if (row.productImage) {
-                          <img [src]="row.productImage" 
-                               [alt]="row.productName" 
-                               class="w-12 h-12 object-cover rounded-lg border border-gray-200 cursor-pointer hover:ring-2 hover:ring-primary-500 transition-all"
-                               (click)="openImagePreview(row.productImage, row.productName, row.productDescription)"
-                               (error)="$event.target.src='https://via.placeholder.com/48?text=Sin+Imagen'" />
-                        } @else {
-                          <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
-                            <span class="text-gray-400 text-xs">Sin img</span>
+                      <td class="px-6 py-4 sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] align-middle pr-4">
+                        <div class="flex flex-col justify-center">
+                          <div class="flex items-center gap-2">
+                            <div class="font-medium text-gray-900 truncate" [title]="row.productName">{{ row.productName }}</div>
+                            <button 
+                              (click)="editProduct(row.productId)"
+                              class="text-gray-400 hover:text-primary-600 transition-colors flex-shrink-0"
+                              title="Editar producto"
+                            >
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                              </svg>
+                            </button>
                           </div>
-                        }
+                          @if (row.productDescription) {
+                            <div class="text-sm text-gray-600 line-clamp-2 mt-0.5" [title]="row.productDescription">{{ row.productDescription }}</div>
+                          }
+                          @if (row.productBrand) {
+                            <div class="text-xs text-gray-500 mt-0.5 truncate" [title]="row.productBrand">Marca: {{ row.productBrand }}</div>
+                          }
+                        </div>
                       </td>
-                      <td class="px-6 py-4 text-sm text-gray-900">{{ row.category || '-' }}</td>
-                      <td class="px-6 py-4 text-sm text-gray-700">{{ row.unitOfMeasure }}</td>
+                      <td class="px-6 py-4 align-middle">
+                        <div class="flex justify-center flex-shrink-0">
+                          @if (row.productImage) {
+                            <img [src]="row.productImage" 
+                                 [alt]="row.productName" 
+                                 class="w-12 h-12 object-cover rounded-lg border border-gray-200 cursor-pointer hover:ring-2 hover:ring-primary-500 transition-all"
+                                 (click)="openImagePreview(row.productImage, row.productName, row.productDescription)"
+                                 (error)="$event.target.src='https://via.placeholder.com/48?text=Sin+Imagen'" />
+                          } @else {
+                            <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                              <span class="text-gray-400 text-xs text-center leading-tight">Sin<br>img</span>
+                            </div>
+                          }
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 text-sm text-gray-900 align-middle truncate" [title]="row.category || '-'">{{ row.category || '-' }}</td>
+                      <td class="px-6 py-4 text-sm text-gray-700 align-middle truncate" [title]="row.unitOfMeasure">{{ row.unitOfMeasure }}</td>
                       @for (warehouse of warehouses(); track warehouse.id) {
-                        <td class="px-6 py-4 text-center">
+                        <td class="px-6 py-4 text-center align-middle">
                           @if (row.stockByWarehouse.get(warehouse.id); as stockInfo) {
                             <div class="flex items-center justify-center gap-2">
                               <span [class]="getStockClass(stockInfo.cantidad)">
@@ -229,7 +235,7 @@ interface StockRow {
                           }
                         </td>
                       }
-                      <td class="px-6 py-4 text-center">
+                      <td class="px-6 py-4 text-center align-middle">
                         <span class="font-semibold text-gray-900">{{ row.totalStock }}</span>
                       </td>
                     </tr>

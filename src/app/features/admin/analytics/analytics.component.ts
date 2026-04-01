@@ -359,7 +359,7 @@ type TabType = 'resumen' | 'ventas' | 'inventario' | 'predicciones' | 'historial
                      </tr>
                    </thead>
                    <tbody class="divide-y divide-gray-100">
-                     @for (item of predictions; track item.productId) {
+                     @for (item of getPaginatedPredictions(); track item.productId) {
                        <tr class="hover:bg-gray-50 transition-colors">
                          <td class="px-6 py-4">
                            <div class="flex items-center">
@@ -381,8 +381,12 @@ type TabType = 'resumen' | 'ventas' | 'inventario' | 'predicciones' | 'historial
                          </td>
                          <td class="px-6 py-4 text-center">
                            <div class="flex items-center justify-center gap-1">
-                             <span class="text-lg font-bold" [class]="getRiskColor(item.daysLeft)">{{ item.daysLeft }}</span>
-                             <span class="text-xs text-gray-500">días</span>
+                             @if (item.daysLeft === 999) {
+                               <span class="text-lg font-bold text-gray-400">N/A</span>
+                             } @else {
+                               <span class="text-lg font-bold" [class]="getRiskColor(item.daysLeft)">{{ item.daysLeft }}</span>
+                               <span class="text-xs text-gray-500">días</span>
+                             }
                            </div>
                          </td>
                          <td class="px-6 py-4 text-center">
@@ -423,6 +427,43 @@ type TabType = 'resumen' | 'ventas' | 'inventario' | 'predicciones' | 'historial
                      }
                    </tbody>
                  </table>
+               </div>
+
+               <!-- Paginación -->
+               <div class="flex items-center justify-between border-t border-gray-100 px-6 py-4 mt-4">
+                 <div class="flex items-center gap-2">
+                   <span class="text-sm text-gray-500">Mostrar</span>
+                   <select 
+                     [value]="predictionsItemsPerPage()" 
+                     (change)="onPredictionsItemsPerPageChange($event)"
+                     class="border border-gray-200 rounded-lg text-sm px-2 py-1 focus:ring-primary-500 focus:border-primary-500"
+                   >
+                     <option value="10">10</option>
+                     <option value="20">20</option>
+                     <option value="50">50</option>
+                   </select>
+                   <span class="text-sm text-gray-500">por página</span>
+                 </div>
+                 
+                 <div class="flex items-center gap-2">
+                   <button 
+                     (click)="onPredictionsPageChange(predictionsCurrentPage() - 1)"
+                     [disabled]="predictionsCurrentPage() === 1"
+                     class="px-3 py-1 border border-gray-200 rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50"
+                   >
+                     Anterior
+                   </button>
+                   <span class="text-sm text-gray-600">
+                     Página {{ predictionsCurrentPage() }} de {{ getTotalPredictionsPages() }}
+                   </span>
+                   <button 
+                     (click)="onPredictionsPageChange(predictionsCurrentPage() + 1)"
+                     [disabled]="predictionsCurrentPage() === getTotalPredictionsPages() || getTotalPredictionsPages() === 0"
+                     class="px-3 py-1 border border-gray-200 rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50"
+                   >
+                     Siguiente
+                   </button>
+                 </div>
                </div>
              </div>
           </div>
@@ -656,6 +697,33 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   deadStockData: DeadStockItem[] = [];
   profitableProducts: ProfitableProduct[] = [];
   predictions: StockoutPrediction[] = [];
+
+  // Pagination for predictions
+  predictionsCurrentPage = signal<number>(1);
+  predictionsItemsPerPage = signal<number>(20);
+
+  getPaginatedPredictions(): StockoutPrediction[] {
+    const start = (this.predictionsCurrentPage() - 1) * this.predictionsItemsPerPage();
+    const end = start + this.predictionsItemsPerPage();
+    return this.predictions.slice(start, end);
+  }
+
+  getTotalPredictionsPages(): number {
+    const total = Math.ceil(this.predictions.length / this.predictionsItemsPerPage());
+    return total === 0 ? 1 : total;
+  }
+
+  onPredictionsPageChange(page: number) {
+    this.predictionsCurrentPage.set(page);
+  }
+
+  onPredictionsItemsPerPageChange(event: any) {
+    const val = event.target.value;
+    if (val) {
+      this.predictionsItemsPerPage.set(parseInt(val, 10));
+      this.predictionsCurrentPage.set(1);
+    }
+  }
 
   // Pagination for dead stock
   deadStockCurrentPage = signal<number>(1);

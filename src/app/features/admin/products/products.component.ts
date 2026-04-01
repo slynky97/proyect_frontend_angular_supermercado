@@ -94,14 +94,14 @@ import { ImagePreviewModalComponent } from '../../../shared/components/image-pre
         </div>
       } @else {
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
-          <table class="w-full">
+          <table class="w-full table-fixed">
             <thead class="bg-primary-600 border-b-2 border-primary-700">
               <tr>
-                <th class="px-6 py-4 text-left text-sm font-semibold text-white">Nombre</th>
-                <th class="px-6 py-4 text-left text-sm font-semibold text-white">Imagen</th>
-                <th class="px-6 py-4 text-left text-sm font-semibold text-white">Categoría</th>
-                <th class="px-6 py-4 text-left text-sm font-semibold text-white">Precio</th>
-                <th class="px-6 py-4 text-left text-sm font-semibold text-white">Acciones</th>
+                <th class="w-full px-6 py-4 text-left text-sm font-semibold text-white">Nombre</th>
+                <th class="w-24 px-6 py-4 text-center text-sm font-semibold text-white truncate">Imagen</th>
+                <th class="w-32 px-6 py-4 text-left text-sm font-semibold text-white truncate">Categoría</th>
+                <th class="w-28 px-6 py-4 text-left text-sm font-semibold text-white truncate">Precio</th>
+                <th class="w-36 px-6 py-4 text-left text-sm font-semibold text-white truncate">Acciones</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
@@ -114,36 +114,48 @@ import { ImagePreviewModalComponent } from '../../../shared/components/image-pre
               } @else {
                 @for (product of paginatedProducts(); track product.id) {
                   <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="px-6 py-4">
-                      <div class="font-medium text-gray-900">{{ product.nombre }}</div>
-                      <div class="text-sm text-gray-600">{{ product.descripcion }}</div>
+                    <td class="px-6 py-4 align-middle">
+                      <div class="flex flex-col justify-center pr-4">
+                        <div class="font-medium text-gray-900 truncate" [title]="product.nombre">{{ product.nombre }}</div>
+                        @if (product.descripcion) {
+                          <div class="text-sm text-gray-600 line-clamp-2 mt-0.5" [title]="product.descripcion">{{ product.descripcion }}</div>
+                        }
+                      </div>
                     </td>
-                    <td class="px-6 py-4">
-                      @if (product.imagen) {
-                        <img 
-                          [src]="product.imagen" 
-                          [alt]="product.nombre" 
-                          class="w-16 h-16 object-cover rounded-lg cursor-pointer hover:ring-2 hover:ring-primary-500 transition-all" 
-                          (click)="openImagePreview(product.imagen, product.nombre, product.descripcion)"
-                        />
-                      } @else {
-                        <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                          <span class="text-gray-400 text-xs">Sin img</span>
-                        </div>
-                      }
+                    <td class="px-6 py-4 align-middle">
+                      <div class="flex justify-center flex-shrink-0">
+                        @if (product.imagen) {
+                          <img 
+                            [src]="product.imagen" 
+                            [alt]="product.nombre" 
+                            class="w-16 h-16 object-cover rounded-lg cursor-pointer hover:ring-2 hover:ring-primary-500 transition-all" 
+                            (click)="openImagePreview(product.imagen, product.nombre, product.descripcion)"
+                          />
+                        } @else {
+                          <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <span class="text-gray-400 text-xs text-center leading-tight">Sin<br>img</span>
+                          </div>
+                        }
+                      </div>
                     </td>
-                    <td class="px-6 py-4 text-sm">{{ product.categoria?.nombre || '-' }}</td>
-                    <td class="px-6 py-4 text-sm font-semibold">Bs. {{ product.precio_venta_actual }}</td>
-                    <td class="px-6 py-4">
-                      <button 
-                        (click)="openAddToCartModal(product)"
-                        class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium flex items-center gap-2"
-                      >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
-                        </svg>
-                        Agregar
-                      </button>
+                    <td class="px-6 py-4 text-sm align-middle truncate" [title]="product.categoria?.nombre || '-'">
+                      {{ product.categoria?.nombre || '-' }}
+                    </td>
+                    <td class="px-6 py-4 text-sm font-semibold align-middle whitespace-nowrap">
+                      Bs. {{ product.precio_venta_actual }}
+                    </td>
+                    <td class="px-6 py-4 align-middle">
+                      <div class="flex justify-start">
+                        <button 
+                          (click)="openAddToCartModal(product)"
+                          class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium flex items-center gap-2"
+                        >
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                          </svg>
+                          Agregar
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 }
