@@ -360,7 +360,7 @@ type TabType = 'resumen' | 'ventas' | 'inventario' | 'predicciones' | 'historial
                    </thead>
                    <tbody class="divide-y divide-gray-100">
                      @for (item of getPaginatedPredictions(); track item.productId) {
-                       <tr class="hover:bg-gray-50 transition-colors">
+                       <tr class="hover:bg-blue-50 transition-colors cursor-pointer group" (click)="openPredictionDrawer(item)">
                          <td class="px-6 py-4">
                            <div class="flex items-center">
                              <div class="bg-gray-100 p-2 rounded-lg mr-3">
@@ -542,6 +542,111 @@ type TabType = 'resumen' | 'ventas' | 'inventario' | 'predicciones' | 'historial
         }
 
       </div>
+
+      <!-- Drawer de Predicción -->
+      @if (selectedPredictionInfo()) {
+        <div class="fixed inset-0 z-[100] overflow-hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
+          <!-- Background Overlay -->
+          <div class="absolute inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm transition-opacity" (click)="closePredictionDrawer()"></div>
+          
+          <div class="fixed inset-y-0 right-0 max-w-full flex">
+            <!-- Panel Lateral -->
+            <div class="relative w-screen max-w-md transform transition-transform ease-in-out duration-300 translate-x-0 bg-white shadow-2xl flex flex-col h-full border-l border-gray-200">
+              
+              <!-- Header -->
+              <div class="px-8 py-6 border-b border-gray-100 flex items-start justify-between bg-white relative z-10">
+                <div>
+                  <h2 class="text-xl font-bold text-gray-900" id="slide-over-title">Análisis de Desgaste</h2>
+                  <p class="text-sm font-medium text-primary-600 mt-1 flex items-center gap-2">
+                    <i class="fas fa-box"></i>
+                    {{ selectedPredictionInfo()?.productName }}
+                  </p>
+                </div>
+                <button type="button" class="bg-gray-50 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 p-2.5 transition-colors" (click)="closePredictionDrawer()">
+                  <span class="sr-only">Cerrar panel</span>
+                  <i class="fas fa-times text-lg"></i>
+                </button>
+              </div>
+
+              <!-- Content Area -->
+              <div class="px-8 py-8 flex-1 overflow-y-auto bg-gray-50/30">
+                <!-- KPIs -->
+                <div class="grid grid-cols-2 gap-5 mb-8">
+                  <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex flex-col gap-1">
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <i class="fas fa-cubes"></i> Stock Actual
+                    </div>
+                    <div class="text-3xl font-black text-gray-900">{{ selectedPredictionInfo()?.currentStock }}<span class="text-sm font-medium text-gray-400 ml-1">u.</span></div>
+                  </div>
+                  <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex flex-col gap-1">
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <i class="fas fa-bolt"></i> Velocidad (Día)
+                    </div>
+                    <div class="text-3xl font-black text-gray-900">{{ selectedPredictionInfo()?.dailyVelocity?.toFixed(2) }}</div>
+                  </div>
+                </div>
+
+                <!-- Gráfico Chart.js -->
+                <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm mb-6">
+                  <h3 class="text-sm font-bold text-gray-800 mb-6 flex items-center gap-2">
+                    <i class="fas fa-chart-line text-primary-500"></i> Proyección de Desgaste
+                  </h3>
+                  <div class="h-[280px] w-full relative">
+                    <canvas 
+                        baseChart
+                        [data]="predictionChartData"
+                        [options]="predictionChartOptions"
+                        [type]="'line'"
+                    ></canvas>
+                  </div>
+                </div>
+                
+                <!-- Insight Card -->
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <div class="p-5 border-b border-gray-50 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center" 
+                         [class.bg-red-100]="(selectedPredictionInfo()?.daysLeft ?? 999) <= 7"
+                         [class.text-red-600]="(selectedPredictionInfo()?.daysLeft ?? 999) <= 7"
+                         [class.bg-yellow-100]="(selectedPredictionInfo()?.daysLeft ?? 999) > 7 && (selectedPredictionInfo()?.daysLeft ?? 999) <= 30"
+                         [class.text-yellow-600]="(selectedPredictionInfo()?.daysLeft ?? 999) > 7 && (selectedPredictionInfo()?.daysLeft ?? 999) <= 30"
+                         [class.bg-green-100]="(selectedPredictionInfo()?.daysLeft ?? 999) > 30"
+                         [class.text-green-600]="(selectedPredictionInfo()?.daysLeft ?? 999) > 30">
+                        <i class="fas fa-robot text-lg"></i>
+                    </div>
+                    <div>
+                      <h4 class="text-sm font-bold text-gray-900">Análisis de Predicción</h4>
+                      <p class="text-xs text-gray-500 font-medium">Agotamiento de stock</p>
+                    </div>
+                  </div>
+                  <div class="p-5 bg-gray-50/50">
+                    <p class="text-sm text-gray-700 leading-relaxed mb-4">
+                      Basado en el histórico, el inventario de este producto llegará a <b>cero</b> en aproximadamente 
+                      <b [class.text-red-600]="(selectedPredictionInfo()?.daysLeft ?? 999) <= 7">
+                        {{ selectedPredictionInfo()?.daysLeft === 999 ? 'más de 90' : selectedPredictionInfo()?.daysLeft }} días
+                      </b>.
+                    </p>
+                    
+                    @if (selectedPredictionInfo()?.suggestedPurchase && (selectedPredictionInfo()?.suggestedPurchase ?? 0) > 0) {
+                      <div class="flex items-center justify-between p-3.5 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
+                        <span class="text-sm font-bold text-green-800">Sugerencia de Compra (30d):</span>
+                        <div class="flex items-center gap-2">
+                           <i class="fas fa-cart-plus text-green-600"></i>
+                           <span class="text-lg font-black text-green-700">+{{ selectedPredictionInfo()?.suggestedPurchase }} u.</span>
+                        </div>
+                      </div>
+                    } @else {
+                       <div class="flex items-center justify-between p-3.5 bg-gray-100 rounded-xl border border-gray-200">
+                        <span class="text-sm font-bold text-gray-700">Estado de Cobertura:</span>
+                        <span class="text-sm font-black text-gray-800">Suficiente</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `,
   styles: [`
@@ -570,6 +675,52 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   customEndDate = signal<string>('');
   deadStockDays = signal<number>(30);
   isRefreshing = signal<boolean>(false);
+
+  selectedPredictionInfo = signal<StockoutPrediction | null>(null);
+
+  public predictionChartData: ChartData<'line'> = {
+    labels: [],
+    datasets: [{
+      label: 'Proyección de Stock',
+      data: [],
+      fill: true,
+      borderColor: '#ef4444',
+      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+      tension: 0.1,
+      borderWidth: 2,
+      pointRadius: 3,
+      pointHoverRadius: 5
+    }]
+  };
+
+  public predictionChartOptions: ChartOptions<'line'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        padding: 12,
+        titleFont: { size: 13, family: "'Inter', sans-serif" },
+        bodyFont: { size: 14, weight: 'bold', family: "'Inter', sans-serif" },
+        callbacks: {
+          label: (context) => `Stock Estimado: ${Math.max(0, Number(context.parsed.y)).toFixed(0)} unidades`
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: { color: 'rgba(0, 0, 0, 0.05)' },
+        title: { display: true, text: 'Unidades Físicas', font: {size: 11} },
+        border: {dash: [4, 4]}
+      },
+      x: {
+        grid: { display: false },
+        title: { display: true, text: 'Línea de Tiempo (Días)', font: {size: 11} }
+      }
+    }
+  };
 
   private refreshInterval: any;
 
@@ -1222,5 +1373,53 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
         // Trigger chart update
         this.productHistoryData = { ...this.productHistoryData };
       });
+  }
+
+  openPredictionDrawer(item: StockoutPrediction) {
+    this.selectedPredictionInfo.set(item);
+    
+    // Generar datos asumiendo 30 días o hasta que choca a 0 (lo que sea más largo max 60)
+    const labels = [];
+    const data = [];
+    const currentStock = item.currentStock;
+    const velocity = item.dailyVelocity;
+    
+    // Dibujar 30 días de proyección
+    const maxDays = Math.min(Math.max(30, item.daysLeft + 5), 60);
+
+    for (let i = 0; i <= maxDays; i++) {
+        labels.push(i === 0 ? 'Hoy' : `+${i}d`);
+        // Calcular decrecimiento lineal
+        const projectedStock = currentStock - (velocity * i);
+        data.push(Math.max(0, projectedStock)); // No bajar de 0 en el gráfico
+        if (projectedStock < 0) {
+            // Un par de días extra en 0 para visualización y salir
+            if (i > item.daysLeft + 2) break;
+        }
+    }
+
+    this.predictionChartData.labels = labels;
+    this.predictionChartData.datasets[0].data = data;
+    
+    // Configurar gradiente CSS simulado con colores sólidos según gravedad
+    if (item.daysLeft <= 7) {
+        this.predictionChartData.datasets[0].borderColor = '#ef4444'; // Red-500
+        this.predictionChartData.datasets[0].backgroundColor = 'rgba(239, 68, 68, 0.1)';
+        this.predictionChartData.datasets[0].pointBackgroundColor = '#ef4444';
+    } else if (item.daysLeft <= 30) {
+        this.predictionChartData.datasets[0].borderColor = '#f59e0b'; // Amber-500
+        this.predictionChartData.datasets[0].backgroundColor = 'rgba(245, 158, 11, 0.1)';
+        this.predictionChartData.datasets[0].pointBackgroundColor = '#f59e0b';
+    } else {
+        this.predictionChartData.datasets[0].borderColor = '#10b981'; // Emerald-500
+        this.predictionChartData.datasets[0].backgroundColor = 'rgba(16, 185, 129, 0.1)';
+        this.predictionChartData.datasets[0].pointBackgroundColor = '#10b981';
+    }
+
+    this.predictionChartData = { ...this.predictionChartData };
+  }
+
+  closePredictionDrawer() {
+    this.selectedPredictionInfo.set(null);
   }
 }
